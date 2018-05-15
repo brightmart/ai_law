@@ -181,7 +181,9 @@ FC+Softmax
 
   2) A Sensitivity Analysis of (and Practitioners' Guide to) Convolutional Neural Networks for Sentence Classification
 
-  7) <a href='https://github.com/facebookresearch/fastText'>fastText:Bag of Tricks for Efficient Text Classification</a>
+  3) <a href='https://github.com/facebookresearch/fastText'>fastText:Bag of Tricks for Efficient Text Classification</a>
+
+  4) Hierarchical Attention Networks for Document Classification
 
 
 
