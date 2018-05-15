@@ -2,6 +2,10 @@ AI_LAW
 -------------------------------------------------------------------------
 all kinds of baseline models for smart law use AI.
 
+Update: Joint Model for law cases prediction is released. run python HAN_train.py to train the model for predict accusation,
+
+relevant articles and term of imprisonment.
+
 
 1.Desc
 -------------------------------------------------------------------------
@@ -75,7 +79,7 @@ find more about task, data or even start smart AI competition by check here:
 
 5.Transfer Learning & Pretrained Word Embedding TODO
 -------------------------------------------------------------------------
-
+  download pretrained word embedding from https://github.com/Embedding/Chinese-Word-Vectors and enable flag 'use_embedding' during training.
 
 
 
@@ -85,7 +89,7 @@ find more about task, data or even start smart AI competition by check here:
 
 2) TextCNN
 
-3) HAN: hierarchical attention network
+3) HAN: hierarchical attention network(completed)
 
 
 
@@ -109,13 +113,9 @@ HAN||
 
 9.Usage
 -------------------------------------------------------------------------
-  1) transform your data:
+  train:
 
-    call transform_format from data_util_transform_to_standard_format.py
-
-  2) train:
-
-     python p7_TextCNN_train.py
+     python HAN_train.py
 
     it will report macro f1 score and micro f1 score when doing validation.
 
@@ -137,7 +137,27 @@ HAN||
 
 11.Model Details
 -------------------------------------------------------------------------
+Hierarchical Attention Network:
 
+Implementation of Hierarchical Attention Networks for Document Classification
+
+Structure:
+
+embedding
+
+Word Encoder: word level bi-directional GRU to get rich representation of words
+
+Word Attention:word level attention to get important information in a sentence
+
+Sentence Encoder: sentence level bi-directional GRU to get rich representation of sentences
+
+Sentence Attention: sentence level attention to get important sentence among sentences
+
+One Layer MLP for transform document representation to each sub task's features.
+
+FC+Softmax
+
+![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
 
 
 12.TODO

@@ -9,14 +9,16 @@ from tflearn.data_utils import pad_sequences
 from collections import Counter
 import os
 import pickle
+import json
+import jieba
 
 PAD_ID = 0
 UNK_ID=1
 _PAD="_PAD"
 _UNK="UNK"
 
-
-def load_data_multilabel(traning_data_path,vocab_word2index, vocab_label2index,sentence_len,training_portion=0.95,name_scope='cnn'):
+def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -24,49 +26,102 @@ def load_data_multilabel(traning_data_path,vocab_word2index, vocab_label2index,s
     :param vocab_label2index:
     :return:
     """
+    # 1. use cache file if exist
     cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.pik'
     print("cache_path:",cache_file,"train_valid_test_file_exists:",os.path.exists(cache_file))
     if os.path.exists(cache_file):
         with open(cache_file, 'rb') as data_f:
             print("going to load cache file from file system and return")
             return pickle.load(data_f)
+    # 2. read source file
+    train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
+    valid_file_object = codecs.open(valid_data_path, mode='r', encoding='utf-8')
+    test_data_obejct = codecs.open(test_data_path, mode='r', encoding='utf-8')
+    train_lines = train_file_object.readlines()
+    valid_lines=valid_file_object.readlines()
+    test_lines=test_data_obejct.readlines()
+    random.shuffle(train_lines)
 
-    file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
-    lines = file_object.readlines()
-    random.shuffle(lines)
-    label_size=len(vocab_label2index)
-    X = []
-    Y = []
-    for i,line in enumerate(lines):
-        raw_list = line.strip().split("__label__")
-        input_list = raw_list[0].strip().split(" ")
-        input_list = [x.strip().replace(" ", "") for x in input_list if x != '']
-        x=[vocab_word2index.get(x,UNK_ID) for x in input_list]
+    if test_mode:
+        train_lines=train_lines[0:1000]
+    # 3. transform to train/valid data to standardized format
+    train=transform_data_to_index(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len)
+    valid=transform_data_to_index(valid_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len)
+    test=transform_data_to_index(test_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len)
 
-        label_list = raw_list[1:]
-        label_list=[l.strip().replace(" ", "") for l in label_list if l != '']
-        label_list=[vocab_label2index[label] for label in label_list]
-        y=transform_multilabel_as_multihot(label_list,label_size)
-        X.append(x)
-        Y.append(y)
-        #if i==3:
-        #    iii=0
-        #    iii/0
-    X = pad_sequences(X, maxlen=sentence_len, value=0.)  # padding to max length
-    number_examples = len(lines)
-    training_number=int(training_portion* number_examples)
-    train = (X[0:training_number], Y[0:training_number])
-    valid_number=min(1000,number_examples-training_number)
-    test = (X[training_number+ 1:training_number+valid_number+1], Y[training_number + 1:training_number+valid_number+1])
-
-    #save train/valid/test/true_label_pert to file system as cache
-    # save to file system if vocabulary of words not exists(pickle).
+    # 4. save to file system if vocabulary of words not exists
     if not os.path.exists(cache_file):
         with open(cache_file, 'ab') as data_f:
-            print("going to dump train/test data to file sytem.")
-            pickle.dump((train,test),data_f)
-    return train,test
+            print("going to dump train/valid/test data to file sytem.")
+            pickle.dump((train,valid,test),data_f)
+    return train,valid,test
 
+
+def transform_data_to_index(lines,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,sentence_len):
+    """
+    transform data to index using vocab and label dict.
+    :param lines:
+    :param vocab_word2index:
+    :param accusation_label2index:
+    :param article_label2index:
+    :param deathpenalty_label2index:
+    :param lifeimprisonment_label2index:
+    :param sentence_len: max sentence length
+    :return:
+    """
+    X = []
+    Y_accusation = []  # discrete
+    Y_article = []  # discrete
+    Y_deathpenalty = []  # discrete
+    Y_lifeimprisonment = []  # discrete
+    Y_imprisonment = []  # continuous
+    #for k,v in accusation_label2index.items():
+    #    print(k);print(v)
+    accusation_label_size=len(accusation_label2index)
+    article_lable_size=len(article_label2index)
+    for i, line in enumerate(lines):
+        if i%10000==0:
+            print("i:", i)
+        json_string = json.loads(line.strip())
+
+        # 1. transform input x.discrete
+        facts = json_string['fact']
+        input_list = token_string_as_list(facts)  # tokenize
+        x = [vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
+        X.append(x)
+
+        # 2. transform accusation.discrete
+        accusation_list = json_string['meta']['accusation']
+        accusation_list = [accusation_label2index[label] for label in accusation_list]
+        y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size)
+        Y_accusation.append(y_accusation)
+
+        # 3.transform relevant article.discrete
+        article_list = json_string['meta']['relevant_articles']
+        article_list = [article_label2index[label] for label in article_list]
+        y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
+        Y_article.append(y_article)
+
+        # 4.transform death penalty.discrete
+        death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty
+        death_penalty = deathpenalty_label2index[death_penalty]
+        y_deathpenalty = transform_multilabel_as_multihot(death_penalty, 2)
+        Y_deathpenalty.append(y_deathpenalty)
+
+        # 5.transform life imprisonment.discrete
+        life_imprisonment = json_string['meta']['term_of_imprisonment']['life_imprisonment']
+        life_imprisonment = lifeimprisonment_label2index[life_imprisonment]
+        y_lifeimprisonment = transform_multilabel_as_multihot(life_imprisonment, 2)
+        Y_lifeimprisonment.append(y_lifeimprisonment)
+
+        # 6.transform imprisonment.continuous
+        imprisonment = json_string['meta']['term_of_imprisonment']['imprisonment']  # continuous value like:10
+        y_imprisonment = float(imprisonment)
+        Y_imprisonment.append(y_imprisonment)
+
+    X = pad_sequences(X, maxlen=sentence_len, value=0.)  # padding to max length
+    data = (X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment)
+    return data
 
 def transform_multilabel_as_multihot(label_list,label_size):
     """
@@ -81,7 +136,7 @@ def transform_multilabel_as_multihot(label_list,label_size):
     return result
 
 #use pretrained word embedding to get word vocabulary and labels, and its relationship with index
-def create_vocabulary(training_data_path,vocab_size,name_scope='cnn'):
+def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=False):
     """
     create vocabulary
     :param training_data_path:
@@ -99,52 +154,83 @@ def create_vocabulary(training_data_path,vocab_size,name_scope='cnn'):
     print("cache_path:",cache_path,"file_exists:",os.path.exists(cache_path))
     if os.path.exists(cache_path):
         with open(cache_path, 'rb') as data_f:
+            print("going to load cache file.vocab of words and labels")
             return pickle.load(data_f)
     else:
-        vocabulary_word2index={}
-        vocabulary_index2word={}
-        vocabulary_word2index[_PAD]=PAD_ID
-        vocabulary_index2word[PAD_ID]=_PAD
-        vocabulary_word2index[_UNK]=UNK_ID
-        vocabulary_index2word[UNK_ID]=_UNK
+        vocab_word2index={}
+        vocab_word2index[_PAD]=PAD_ID
+        vocab_word2index[_UNK]=UNK_ID
 
-        vocabulary_label2index={}
-        vocabulary_index2label={}
+        accusation_label2index={}
+        articles_label2index={}
 
         #1.load raw data
         file_object = codecs.open(training_data_path, mode='r', encoding='utf-8')
         lines=file_object.readlines()
+        if test_mode:
+            lines=lines[0:1000]
         #2.loop each line,put to counter
         c_inputs=Counter()
-        c_labels=Counter()
-        for line in lines:
-            raw_list=line.strip().split("__label__")
-
-            input_list = raw_list[0].strip().split(" ")
-            input_list = [x.strip().replace(" ", "") for x in input_list if x != '']
-            label_list=[l.strip().replace(" ","") for l in raw_list[1:] if l!='']
+        c_accusation_labels=Counter()
+        c_article_labels=Counter()
+        for i,line in enumerate(lines):
+            if i%10000==0:
+                print(i)
+            json_string = json.loads(line.strip())
+            facts = json_string['fact']
+            input_list = token_string_as_list(facts)
             c_inputs.update(input_list)
-            c_labels.update(label_list)
+
+            accusation_list = json_string['meta']['accusation']
+            c_accusation_labels.update(accusation_list)
+
+            article_list = json_string['meta']['relevant_articles']
+            c_article_labels.update(article_list)
+
         #return most frequency words
         vocab_list=c_inputs.most_common(vocab_size)
-        label_list=c_labels.most_common()
+        word_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'word_freq.txt',mode='a',encoding='utf-8')
         #put those words to dict
         for i,tuplee in enumerate(vocab_list):
-            word,_=tuplee
-            vocabulary_word2index[word]=i+2
-            vocabulary_index2word[i+2]=word
+            word,freq=tuplee
+            word_freq_file.write(word+":"+str(freq)+"\n")
+            vocab_word2index[word]=i+2
 
-        for i,tuplee in enumerate(label_list):
-            label,_=tuplee;
-            #label=str(label) #TODO TODO TODO TODO TODO TODO TODO TODO TODO
-            vocabulary_label2index[label]=i
-            vocabulary_index2label[i]=label
+        accusation_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'accusation_freq.txt',mode='a',encoding='utf-8')
+        accusation_label_list=c_accusation_labels.most_common()
+        for i,tuplee in enumerate(accusation_label_list):
+            label,freq=tuplee
+            accusation_freq_file.write(label+":"+str(freq)+"\n")
+            accusation_label2index[label]=i
+
+        article_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'article_freq.txt',mode='a',encoding='utf-8')
+        article_label_list=c_article_labels.most_common()
+        for j,tuplee in enumerate(article_label_list):
+            label,freq=tuplee
+            article_freq_file.write(str(label)+":"+str(freq)+"\n")
+            articles_label2index[label]=j
 
         #save to file system if vocabulary of words not exists.
         if not os.path.exists(cache_path):
             with open(cache_path, 'ab') as data_f:
-                pickle.dump((vocabulary_word2index,vocabulary_index2word,vocabulary_label2index,vocabulary_index2label), data_f)
-    return vocabulary_word2index,vocabulary_index2word,vocabulary_label2index,vocabulary_index2label
+                print("going to save cache file of vocab of words and labels")
+                pickle.dump((vocab_word2index, accusation_label2index,articles_label2index), data_f)
+
+    word_freq_file.close()
+    accusation_freq_file.close()
+    article_freq_file.close()
+    print("create_vocabulary.ended")
+    return vocab_word2index, accusation_label2index,articles_label2index
+
+def token_string_as_list(string,tokenize_style='word'):
+    #string=string.decode("utf-8")
+    length=len(string)
+    if tokenize_style=='char':
+        listt=[string[i] for i in range(length)]
+    elif tokenize_style=='word':
+        listt=jieba.lcut(string)
+    listt=[x for x in listt if x.strip()]
+    return listt
 
 #training_data_path='../data/sample_multiple_label3.txt'
 #vocab_size=100
