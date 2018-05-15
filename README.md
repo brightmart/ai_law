@@ -159,6 +159,8 @@ One Layer MLP for transform document representation to each sub task's features.
 
 FC+Softmax
 
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
+
 ![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
 
 
