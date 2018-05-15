@@ -21,7 +21,7 @@ find more about task, data or even start smart AI competition by check here:
 
 <a href='https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg'>model_law</a>
 
- <a href='http://cail.cipsc.org.cn/index.html'>http://cail.cipsc.org.cn/index.html</a>
+<a href='http://cail.cipsc.org.cn/index.html'>http://cail.cipsc.org.cn/index.html</a>
 
 
 
