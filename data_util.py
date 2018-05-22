@@ -17,6 +17,8 @@ UNK_ID=1
 _PAD="_PAD"
 _UNK="UNK"
 
+imprisonment_mean=26.2
+imprisonment_std=33.5
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
                          deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False):
     """
@@ -57,7 +59,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     return train,valid,test
 
 
-def transform_data_to_index(lines,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,sentence_len):
+def transform_data_to_index(lines,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,reverse_flag=False):
     """
     transform data to index using vocab and label dict.
     :param lines:
@@ -96,8 +98,12 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
         y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size)
         Y_accusation.append(y_accusation)
 
+        #print("article_label2index:")
+        #for k,v in article_label2index.items():
+        #    print(k,v)
         # 3.transform relevant article.discrete
         article_list = json_string['meta']['relevant_articles']
+        #print("article_list[0]:",article_list[0],type(article_list[0]))
         article_list = [article_label2index[label] for label in article_list]
         y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
         Y_article.append(y_article)
@@ -116,10 +122,19 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
 
         # 6.transform imprisonment.continuous
         imprisonment = json_string['meta']['term_of_imprisonment']['imprisonment']  # continuous value like:10
-        y_imprisonment = float(imprisonment)
+        y_imprisonment = float((imprisonment-imprisonment_mean)/imprisonment_std)
         Y_imprisonment.append(y_imprisonment)
 
-    X = pad_sequences(X, maxlen=sentence_len, value=0.)  # padding to max length
+    X = pad_sequences(X, maxlen=sentence_len, value=0.,truncating='pre')  # padding to max length.remove sequence that longer than max length from beginning.
+    #reverse
+    if reverse_flag:
+        X_=np.zeros(X.shape)
+        for i, element in enumerate(X):
+            e = list(element);
+            e.reverse()
+            X_[i] = np.array(e)
+        X=X_
+
     data = (X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment)
     return data
 
@@ -136,7 +151,7 @@ def transform_multilabel_as_multihot(label_list,label_size):
     return result
 
 #use pretrained word embedding to get word vocabulary and labels, and its relationship with index
-def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=False):
+def create_vocabulary(data_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False):
     """
     create vocabulary
     :param training_data_path:
@@ -149,7 +164,7 @@ def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=F
     if not os.path.isdir(cache_vocabulary_label_pik): # create folder if not exists.
         os.makedirs(cache_vocabulary_label_pik)
 
-    # if cache exists. load it; otherwise create it.
+    #0.if cache exists. load it; otherwise create it.
     cache_path =cache_vocabulary_label_pik+"/"+'vocab_label.pik'
     print("cache_path:",cache_path,"file_exists:",os.path.exists(cache_path))
     if os.path.exists(cache_path):
@@ -167,8 +182,9 @@ def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=F
         #1.load raw data
         file_object = codecs.open(training_data_path, mode='r', encoding='utf-8')
         lines=file_object.readlines()
+        random.shuffle(lines)
         if test_mode:
-            lines=lines[0:1000]
+           lines=lines[0:10000]
         #2.loop each line,put to counter
         c_inputs=Counter()
         c_accusation_labels=Counter()
@@ -187,7 +203,7 @@ def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=F
             article_list = json_string['meta']['relevant_articles']
             c_article_labels.update(article_list)
 
-        #return most frequency words
+        #3.get most frequency words
         vocab_list=c_inputs.most_common(vocab_size)
         word_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'word_freq.txt',mode='a',encoding='utf-8')
         #put those words to dict
@@ -196,26 +212,43 @@ def create_vocabulary(training_data_path,vocab_size,name_scope='cnn',test_mode=F
             word_freq_file.write(word+":"+str(freq)+"\n")
             vocab_word2index[word]=i+2
 
+        #4.1 accusation and its frequency.
         accusation_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'accusation_freq.txt',mode='a',encoding='utf-8')
         accusation_label_list=c_accusation_labels.most_common()
         for i,tuplee in enumerate(accusation_label_list):
             label,freq=tuplee
             accusation_freq_file.write(label+":"+str(freq)+"\n")
-            accusation_label2index[label]=i
 
+        #4.2 accusation dict
+        accusation_voc_file=data_path+"/accu.txt"
+        accusation_voc_object=codecs.open(accusation_voc_file,mode='r',encoding='utf-8')
+        accusation_voc_lines=accusation_voc_object.readlines()
+        for i,accusation_name in enumerate(accusation_voc_lines):
+            accusation_name=accusation_name.strip()
+            accusation_label2index[accusation_name]=i
+
+        #5.1 relevant article(law) and its frequency
         article_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'article_freq.txt',mode='a',encoding='utf-8')
         article_label_list=c_article_labels.most_common()
         for j,tuplee in enumerate(article_label_list):
             label,freq=tuplee
             article_freq_file.write(str(label)+":"+str(freq)+"\n")
-            articles_label2index[label]=j
 
-        #save to file system if vocabulary of words not exists.
+        #5.2 relevant article dict
+        article_voc_file=data_path+"/law.txt"
+        article_voc_object=codecs.open(article_voc_file,mode='r',encoding='utf-8')
+        article_voc_lines=article_voc_object.readlines()
+        for i,law_id in enumerate(article_voc_lines):
+            law_id=int(law_id.strip())
+            articles_label2index[law_id]=i
+
+        #6.save to file system if vocabulary of words not exists.
         if not os.path.exists(cache_path):
             with open(cache_path, 'ab') as data_f:
                 print("going to save cache file of vocab of words and labels")
                 pickle.dump((vocab_word2index, accusation_label2index,articles_label2index), data_f)
 
+    #7.close resources
     word_freq_file.close()
     accusation_freq_file.close()
     article_freq_file.close()
@@ -231,6 +264,20 @@ def token_string_as_list(string,tokenize_style='word'):
         listt=jieba.lcut(string)
     listt=[x for x in listt if x.strip()]
     return listt
+
+def get_part_validation_data(valid,num_valid=2000):
+    valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment=valid
+    number_examples=len(valid_X)
+    permutation = np.random.permutation(number_examples)[0:num_valid]
+    valid_X2, valid_Y_accusation2, valid_Y_article2, valid_Y_deathpenalty2, valid_Y_lifeimprisonment2, valid_Y_imprisonment2=[],[],[],[],[],[]
+    for index in permutation :
+        valid_X2.append(valid_X[index])
+        valid_Y_accusation2.append(valid_Y_accusation[index])
+        valid_Y_article2.append(valid_Y_article[index])
+        valid_Y_deathpenalty2.append(valid_Y_deathpenalty[index])
+        valid_Y_lifeimprisonment2.append(valid_Y_lifeimprisonment[index])
+        valid_Y_imprisonment2.append(valid_Y_imprisonment[index])
+    return valid_X2,valid_Y_accusation2,valid_Y_article2,valid_Y_deathpenalty2,valid_Y_lifeimprisonment2,valid_Y_imprisonment2
 
 #training_data_path='../data/sample_multiple_label3.txt'
 #vocab_size=100

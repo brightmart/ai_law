@@ -7,6 +7,8 @@ import csv
 import json
 import jieba
 import random
+import numpy as np
+
 def length_of_sentence(file_path):
     #1.read data
     file_object = open(file_path, 'r')
@@ -127,6 +129,28 @@ def token_string_as_list(string,tokenize_style='word'):
     listt=[x for x in listt if x.strip()]
     return listt
 
+def compute_mean_std_imprisonment(file_path):
+    """
+    compute mean and std of imprisonment:('mean:', '26.2', ';std:', '33.5')
+    :param file_path:
+    :return:
+    """
+    mean,std=0.0,0.0
+    file_object = open(file_path, 'r')
+    lines = file_object.readlines()
+    random.shuffle(lines)
+    lines = lines[0:30000]
+    list_imprisonment=[]
+    for i, line in enumerate(lines):
+        json_string = json.loads(line)
+        imprisonment = float(json_string['meta']['term_of_imprisonment']['imprisonment'])
+        list_imprisonment.append(imprisonment)
+    array=np.array(list_imprisonment)
+    mean=np.mean(array)
+    std=np.std(array)
+    return mean,std
+
 file_path='../data/data_train.json'
-label_length_of_sentence(file_path)
+mean,std=compute_mean_std_imprisonment(file_path)
+print("mean:",mean,";std:",std)
 

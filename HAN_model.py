@@ -21,7 +21,7 @@ class HierarchicalAttention:
         self.vocab_size = vocab_size
         self.embed_size = embed_size
         self.is_training = is_training
-        self.learning_rate = tf.Variable(learning_rate, trainable=False, name="learning_rate")#TODO ADD learning_rate
+        self.learning_rate = tf.Variable(learning_rate, trainable=False, name="learning_rate")
         self.learning_rate_decay_half_op = tf.assign(self.learning_rate, self.learning_rate * 0.5)
         self.initializer = initializer
         self.hidden_size = hidden_size
@@ -92,7 +92,6 @@ class HierarchicalAttention:
 
         h_lifeimprisonment = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
         logits_lifeimprisonment = tf.layers.dense(h_lifeimprisonment, self.lifeimprisonment_num_classes,use_bias=True)  # shape:[None,self.num_classes]
-        print("logits_lifeimprisonment:",logits_lifeimprisonment)
         logits_imprisonment = tf.layers.dense(h, 1,use_bias=True)  # imprisonment is a continuous value, no need to use activation function
         logits_imprisonment = tf.reshape(logits_imprisonment, [-1]) #[batch_size]
 
@@ -132,7 +131,7 @@ class HierarchicalAttention:
         encdoded_inputs = tf.concat(outputs, axis=2)  #[batch_size,sequence_length,hidden_size*2]
         return encdoded_inputs  #[batch_size,sequence_length,num_units*2]
 
-    def loss(self,l2_lambda=0.0001):
+    def loss(self,l2_lambda=0.0001,epislon=0.000001):
         # input: `logits` and `labels` must have the same shape `[batch_size, num_classes]`
         # output: A 1-D `Tensor` of length `batch_size` of the same type as `logits` with the softmax cross entropy loss.
         # input_y:shape=(?, 1999); logits:shape=(?, 1999)
@@ -140,40 +139,38 @@ class HierarchicalAttention:
         # losses=-self.input_y_multilabel*tf.log(self.logits)-(1-self.input_y_multilabel)*tf.log(1-self.logits)
         #loss1: accusation
         losses_accusation = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_accusation,logits=self.logits_accusation)
-        loss_accusation = tf.reduce_mean((tf.reduce_sum(losses_accusation, axis=1)))# shape=(?,)-->(). loss for all data in the batch-->single loss
+        self.loss_accusation = tf.reduce_mean((tf.reduce_sum(losses_accusation, axis=1)))# shape=(?,)-->(). loss for all data in the batch-->single loss
         #loss2:relevant article
         losses_article = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_article,logits=self.logits_article)
-        loss_article = tf.reduce_mean((tf.reduce_sum(losses_article, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
+        self.loss_article  =   tf.reduce_mean((tf.reduce_sum(losses_article, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
         #loss3:death penalty
         losses_deathpenalty = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_deathpenalty,logits=self.logits_deathpenalty)
-        loss_deathpenalty = tf.reduce_mean((tf.reduce_sum(losses_deathpenalty, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
+        self.loss_deathpenalty = tf.reduce_mean((tf.reduce_sum(losses_deathpenalty, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
         #loss4:life imprisonment
         losses_lifeimprisonment = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_lifeimprisonment,logits=self.logits_lifeimprisonment)
-        loss_lifeimprisonment = tf.reduce_mean((tf.reduce_sum(losses_lifeimprisonment, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
+        self.loss_lifeimprisonment = tf.reduce_mean((tf.reduce_sum(losses_lifeimprisonment, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
         #loss5: imprisonment: how many year in prison.
         #print("====>logits_imprisonment.shape:",self.logits_imprisonment.shape,";self.input_y_imprisonment",self.input_y_imprisonment)
-        loss_imprisonment=tf.reduce_sum(tf.pow((self.logits_imprisonment - self.input_y_imprisonment), 2))/50.0
-
+        #self.loss_imprisonment=tf.reduce_mean(tf.divide(tf.abs(tf.log(self.logits_imprisonment+1.0) - tf.log(self.input_y_imprisonment+1.0)),tf.log(12.0*25.0))) #normaliz to 0-1.0
+        self.loss_imprisonment =tf.reduce_mean(tf.pow((self.logits_imprisonment-self.input_y_imprisonment),2)) #TODO
         print("sigmoid_cross_entropy_with_logits.losses:", losses_accusation)  # shape=(?, 1999).
-        l2_losses = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'bias' not in v.name]) * l2_lambda
+        self.l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'bias' not in v.name]) * l2_lambda
         #set max weight of accusation and article(each is 1/3);others share the result of weights
-        self.weights_accusation = tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 3.0    # 0--1/3
-        self.weights_article = tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 3.0       # 0--1/3
-        self.weights_deathpenalty = tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 9.0   #0--1/9
-        self.weights_lifeimprisonment = tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 9.0 #0--1/9
-        self.weights_imprisonment=1-(self.weights_accusation+self.weights_article+self.weights_deathpenalty+self.weights_lifeimprisonment) #0-1/9
-        loss = self.weights_accusation*loss_accusation+self.weights_article*loss_article+self.weights_deathpenalty*loss_deathpenalty +\
-               self.weights_lifeimprisonment*loss_lifeimprisonment+self.weights_imprisonment*loss_imprisonment+l2_lambda*l2_losses
+        self.weights_accusation = 0.2 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 3.0    # 0--1/3
+        self.weights_article = 0.2 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 3.0       # 0--1/3
+        self.weights_deathpenalty = 0.2 #tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 9.0   #0--1/9
+        self.weights_lifeimprisonment = 0.2 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 9.0 #0--1/9
+        self.weights_imprisonment=0.2 #1-(self.weights_accusation+self.weights_article+self.weights_deathpenalty+self.weights_lifeimprisonment) #0-1/9
+        loss = self.weights_accusation*self.loss_accusation+self.weights_article*self.loss_article+self.weights_deathpenalty*self.loss_deathpenalty +\
+               self.weights_lifeimprisonment*self.loss_lifeimprisonment+self.weights_imprisonment*self.loss_imprisonment+self.l2_loss
         return loss
 
     def train(self):
         """based on the loss, use SGD to update parameter"""
-        learning_rate = tf.train.exponential_decay(self.learning_rate, self.global_step, self.decay_steps,
-                                                   self.decay_rate, staircase=True)
+        learning_rate = tf.train.exponential_decay(self.learning_rate, self.global_step, self.decay_steps, self.decay_rate, staircase=True)
         self.learning_rate_=learning_rate
         #noise_std_dev = tf.constant(0.3) / (tf.sqrt(tf.cast(tf.constant(1) + self.global_step, tf.float32))) #gradient_noise_scale=noise_std_dev
-        train_op = tf_contrib.layers.optimize_loss(self.loss_val, global_step=self.global_step,
-                                                   learning_rate=learning_rate, optimizer="Adam",clip_gradients=self.clip_gradients)
+        train_op = tf_contrib.layers.optimize_loss(self.loss_val, global_step=self.global_step,learning_rate=learning_rate, optimizer="Adam",clip_gradients=self.clip_gradients)
         return train_op
 
     def instantiate_weights(self):

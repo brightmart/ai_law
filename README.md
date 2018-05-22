@@ -2,10 +2,13 @@ AI_LAW
 -------------------------------------------------------------------------
 all kinds of baseline models for smart law use AI.
 
-Update: Joint Model for law cases prediction is released. run python HAN_train.py to train the model for predict accusation,
+Update: Joint Model for law cases prediction is released. run python HAN_train.py to train the model for predict accusation, relevant articles and term of imprisonment.
 
-relevant articles and term of imprisonment.
+challenge of this task: the description of law case(called facts) is quite long, the average words is around 400. it not only long, but contain lots of information,
 
+even for human, you need to pay lots of attention before you can tell what's it about. for machine it need to have ability to handle long distance dependence,
+
+and focus on most important information.
 
 1.Desc
 -------------------------------------------------------------------------
@@ -69,10 +72,149 @@ find more about task, data or even start smart AI competition by check here:
 
          length of relevant articles:[(1, 0.71), (2, 0.0), (3, 0.18), (4, 0.07), (5, 0.03), (6, 0.01), (7, 0.004)].
 
+  Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
-3.Feature Engineering TODO
+  盗窃:10051
+
+  走私、贩卖、运输、制造毒品:8872
+
+  故意伤害:6377
+
+  抢劫:5020
+
+  诈骗:3536
+
+  受贿:3496
+
+  寻衅滋事:3290
+
+  危险驾驶:2758
+
+  组织、强迫、引诱、容留、介绍卖淫:2647
+
+  制造、贩卖、传播淫秽物品:2617
+
+  容留他人吸毒:2597
+
+  交通肇事:2562
+
+  贪污:2391
+
+  非法持有、私藏枪支、弹药:2349
+
+  故意杀人:2282
+
+  开设赌场:2259
+
+  非法持有毒品:2203
+
+  职务侵占:2197
+
+  强奸:2192
+
+  伪造、变造、买卖国家机关公文、证件、印章:2153
+
+
+3.Evaluation: F1 score(Micro,Macro)
 -------------------------------------------------------------------------
+ for task1(predict accusation) and task2(predict relevant article), there are multi-label classification problem. and as we already seen from
 
+ previous description, label distribution may be skewed or imbalanced. so we use f1 score which computed from precision and recall.
+
+ rembember that:
+
+       True Postive=TP=[predict=1,truth=1]
+
+       False Postive=FP=[predict=1,truth=0]
+
+       False Negative=FN=[predict=0,truth=1]
+
+       precison=TP/(TP+FP). precision is among all labels that you predict as postive, how many are real postive
+
+       recall=TP/(TP+FN).   recall is among all true labels, how many you predict as postive.
+
+       f1=(2*precision*recall)/(precision+recall). it's value is among:[0,1].
+
+       ![alt text](https://github.com/brightmart/ai_law/blob/master/data/f1_micro_macro.jpg)
+
+       finally we compute:
+
+            score=((f1_macro+f1_micro)/2.0)*100
+
+  Question1: here we have multi-label, it is not binary classifcaiton problem, how do we define TP,FP,FN and f1 score?
+
+       we will first get confusing matrix(TP,FP,FN), then compute f1 score.
+
+       for your better understanding, i will give you an example. suppose target_label=[2,12,88], predict_label=[2,12,13,10]
+
+       as you can see, unique_label=[2,12,13,10,88]. and two labels exists in both side, label_in_common=[2,12]. and we use a dict to store TP,FP,FN for each class.
+
+       dict_count[class]=(num_TP,num_FP,num_FN)
+
+       1) we will go though this unique_label, and count TP,FP,FN for each class:
+
+            for the first element 2, it exists in predict_label(you predict it is true), and also exists in target_label(actually it is true),
+
+                 so it is True Positive(TP), ===> dict[2]=(1,0,0)
+
+            for the second element 12, it is similiar like first element, also True Positive(TP). ===> dict[12]=(1,0,0)
+
+            for the third element 13, it not exists in predict_label(predict=0), but exists in target_label(truth=1),
+
+                 so it is False Negative(FN),===> dict[13]=(0,0,1)
+
+            for the fourth element 10, predict=1,truth=0 ===>False Postive(FP) ===> dict[10]=(0,1,0)
+
+            for the last element 88,   predict=0,truth=1 ===>False Negative(FN) ===>dict[88]=(0,0,0)
+
+       2) secondly, we compute total TP,FP,FN:
+
+          TP=2,FP=1,FN=2
+
+       3) finally, we compute P,R and F1 score:
+
+          P_micro=TP/(TP+FP)=2/3=0.6777
+
+          R_micro=TP/(TP+FN)=2/4=0.5
+
+          F1_micro=(2*P_micro*R_micro)/(P_micro+R_micro)=0.575
+
+       for detail, check compute_confuse_matrix() and compute_micro_macro() at evaluation_matrix.py
+
+
+   Question2: the above steps is for only one input. but suppose after we go through several inputs, and got:
+
+          dict_count[2]=(20,5,7),
+
+          where we use following way to store information as define in above: dict_count[class]=(num_TP,num_FP,num_FN)
+
+          what's the f1 score for class 2?
+
+          this is similiar we saw in the last step(#3), we will compute Precsion,Recall, then f1 score:
+
+             P_label2=TP/(TP+FP)=20/(20+5)=0.80
+
+             R_label2=TP/(TP+FN)=20/(20+7)=0.74
+
+             f1_label2=(2*P*R)/(P+R)=0.76
+
+           notice: if you want to compute f1_macro, you can go through each class just same as label2, then compute average value among all classes as f1_macro.
+
+
+  Question3: how many labels should we retrieve once we compute the logits for a input?
+
+          remember we are in mulit-label classification scenario. given a input, there may exist multi-label at same time. we can't just get the max possible
+
+          label as our target, which is usually implement by softmax function. that is saying that we can think this is a multi-binary classification problem,
+
+          for each class, we just consider whether it is exists or not. by applying sigmoid function for each class, we will make sure that possibility will be
+
+          between 0 and 1. if the possibility is greater(or equal) than 0.5, we think it is exists(predict=true).
+
+          in a word, we look each class seperately, and get all classes that possibilities we predict greater than a threshold.
+
+
+  for detail above evaluation matrix, check evaluation_matrix.py
 
 
 4.Imbalance Classification for Skew Data TODO
@@ -182,11 +324,17 @@ Chinese Desc of Task:
 12.TODO
 -------------------------------------------------------------------------
 
-   1) extract more data mining features
+   1) F1 score need check
 
-   2) use traditional machin learning like xgboost,random forest
+   2) train loss up and down
 
-   3) try some classic text classification network
+   3) target f1 score reach to 0.5
+
+   4) trancuate sequences in the begining not the end
+
+   5) preprocess document as serveral sentences before graph model
+
+   6) try CNN and other models
 
 
 13.Conclusion
