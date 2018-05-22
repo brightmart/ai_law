@@ -76,8 +76,6 @@ find more about task, data or even start smart AI competition by check here:
 
       Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
-
-
           盗窃:10051
 
           走私、贩卖、运输、制造毒品:8872
@@ -220,7 +218,7 @@ find more about task, data or even start smart AI competition by check here:
           in a word, we look each class seperately, and get all classes that possibilities we predict greater than a threshold.
 
 
-  for detail above evaluation matrix, check evaluation_matrix.py
+     for detail above evaluation matrix, check evaluation_matrix.py
 
 
 4.Imbalance Classification for Skew Data TODO
