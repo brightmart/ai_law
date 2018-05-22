@@ -135,7 +135,7 @@ find more about task, data or even start smart AI competition by check here:
 
        f1=(2*precision*recall)/(precision+recall). it's value is among:[0,1].
 
-       ![alt text](https://github.com/brightmart/ai_law/blob/master/data/f1_micro_macro.jpg)
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/f1_micro_macro.jpg)
 
        finally we compute:
 
@@ -241,7 +241,7 @@ find more about task, data or even start smart AI competition by check here:
 -------------------------------------------------------------------------
    performance on validation dataset(seperate from training data):
 
-      ![alt text](https://github.com/brightmart/ai_law/blob/master/data/han_1000steps.jpg.jpg)
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/han_1000steps.jpg.jpg)
 
 
 Task |Model | F1 Score
