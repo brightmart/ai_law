@@ -28,7 +28,7 @@ find more about task, data or even start smart AI competition by check here:
 
 
 
-2.Data Visualization
+2.Data Visualization & Pre-processing
 
  1)total examples, crime,relevant articles:
 
@@ -42,7 +42,8 @@ find more about task, data or even start smart AI competition by check here:
 
   number of total [relevant_article]:183
 
-  length of inputs(facts of the law case, after word tokenize)
+
+  2) length of inputs(facts of the law case, after word tokenize)
 
      average length: 279
 
@@ -58,7 +59,8 @@ find more about task, data or even start smart AI competition by check here:
 
      that's take length as 500. pad for length less it, and truncate words exceed this number(truncate from start words, not end).
 
-  label distribution(accusation, relevant article):
+
+  3) label distribution(accusation, relevant article):
 
      how many accusations for a case?
 
@@ -74,7 +76,7 @@ find more about task, data or even start smart AI competition by check here:
 
 
 
-      Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
+  4) Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
           盗窃:10051
 
@@ -116,6 +118,19 @@ find more about task, data or even start smart AI competition by check here:
 
           伪造、变造、买卖国家机关公文、证件、印章:2153
 
+  5) preprocess value for imprisonment.
+
+     range of imprisonment from 0 to 300(=12*25), it is raw value too big, not may lead to less efficient for model to learn.
+
+     we will normalize imprisonment using following format:
+
+          imprisonment= (imprisonment- imprisonment_mean)/imprisonment_std
+
+     where imprisonment_mean stand for mean of imprisonment, imprisonment_std stand for stand deviation of imprisonment.
+
+     we can easily to get its mean:, 26.2, and std:33.5 from training data. during test we will re-scale value back:
+
+         imprisonment_test=(imprisonment_test+imprisonment_mean)*imprisonment_std
 
 
 
