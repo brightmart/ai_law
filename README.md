@@ -243,7 +243,9 @@ find more about task, data or even start smart AI competition by check here:
 
 7.Performance
 -------------------------------------------------------------------------
-   performance on validation dataset(seperate from training data):
+   performance on validation dataset(seperate from training data) train for first 1000 steps(around one epoch):
+
+   score task1:58.4, task2:58.4, task3: 70, total score=187.
 
 ![alt text](https://github.com/brightmart/ai_law/blob/master/data/han_1000steps.jpg)
 
