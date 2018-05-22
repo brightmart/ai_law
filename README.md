@@ -72,47 +72,53 @@ find more about task, data or even start smart AI competition by check here:
 
          length of relevant articles:[(1, 0.71), (2, 0.0), (3, 0.18), (4, 0.07), (5, 0.03), (6, 0.01), (7, 0.004)].
 
-  Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
-  盗窃:10051
 
-  走私、贩卖、运输、制造毒品:8872
+      Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
-  故意伤害:6377
 
-  抢劫:5020
 
-  诈骗:3536
+          盗窃:10051
 
-  受贿:3496
+          走私、贩卖、运输、制造毒品:8872
 
-  寻衅滋事:3290
+          故意伤害:6377
 
-  危险驾驶:2758
+          抢劫:5020
 
-  组织、强迫、引诱、容留、介绍卖淫:2647
+          诈骗:3536
 
-  制造、贩卖、传播淫秽物品:2617
+          受贿:3496
 
-  容留他人吸毒:2597
+          寻衅滋事:3290
 
-  交通肇事:2562
+          危险驾驶:2758
 
-  贪污:2391
+          组织、强迫、引诱、容留、介绍卖淫:2647
 
-  非法持有、私藏枪支、弹药:2349
+          制造、贩卖、传播淫秽物品:2617
 
-  故意杀人:2282
+          容留他人吸毒:2597
 
-  开设赌场:2259
+          交通肇事:2562
 
-  非法持有毒品:2203
+          贪污:2391
 
-  职务侵占:2197
+          非法持有、私藏枪支、弹药:2349
 
-  强奸:2192
+          故意杀人:2282
 
-  伪造、变造、买卖国家机关公文、证件、印章:2153
+          开设赌场:2259
+
+          非法持有毒品:2203
+
+          职务侵占:2197
+
+          强奸:2192
+
+          伪造、变造、买卖国家机关公文、证件、印章:2153
+
+
 
 
 3.Evaluation: F1 score(Micro,Macro)
@@ -184,9 +190,9 @@ find more about task, data or even start smart AI competition by check here:
 
    Question2: the above steps is for only one input. but suppose after we go through several inputs, and got:
 
-          dict_count[2]=(20,5,7),
+          dict_count[2]=(20,5,7)
 
-          where we use following way to store information as define in above: dict_count[class]=(num_TP,num_FP,num_FN)
+          where we define format in above: dict_count[class]=(num_TP,num_FP,num_FN)
 
           what's the f1 score for class 2?
 
