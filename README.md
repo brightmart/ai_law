@@ -29,8 +29,9 @@ find more about task, data or even start smart AI competition by check here:
 
 
 2.Data Visualization & Pre-processing
+-------------------------------------------------------------------------
 
- 1)total examples, crime,relevant articles:
+ 1) total examples, crime,relevant articles:
 
   data_train: 155k
 

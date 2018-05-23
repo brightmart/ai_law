@@ -24,7 +24,7 @@ tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of v
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
 tf.app.flags.DEFINE_integer("vocab_size",60000,"maximum vocab size.")
 tf.app.flags.DEFINE_float("learning_rate",0.001,"learning rate")
-tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size for training/evaluating.") #批处理的大小 32-->128
+tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
@@ -36,7 +36,7 @@ tf.app.flags.DEFINE_integer("embed_size",128,"embedding size")
 tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size")
 
 tf.app.flags.DEFINE_boolean("is_training",True,"is traning.true:tranining,false:testing/inference")
-tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
+tf.app.flags.DEFINE_integer("num_epochs",5,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_embedding",False,"whether to use embedding or not.")
 tf.app.flags.DEFINE_string("word2vec_model_path","word2vec-title-desc.bin","word2vec's vocabulary and vectors")
@@ -76,9 +76,9 @@ def main(_):
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
             print("Restoring Variables from Checkpoint.")
             saver.restore(sess,tf.train.latest_checkpoint(FLAGS.ckpt_dir))
-            #for i in range(3): #decay learning rate if necessary.
-            #    print(i,"Going to decay learning rate by half.")
-            #    sess.run(model.learning_rate_decay_half_op)
+            for i in range(2): #decay learning rate if necessary.
+                print(i,"Going to decay learning rate by half.")
+                sess.run(model.learning_rate_decay_half_op)
         else:
             print('Initializing Variables')
             sess.run(tf.global_variables_initializer())
@@ -120,8 +120,8 @@ def main(_):
                                 % (epoch, loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle,f1_a_death, f1_i_death, f1_a_life, f1_i_life))
                     print("1.Accasation Score:", accasation_score, ";2.Article Score:", article_score, ";3.Penalty Score:",score_penalty, ";Score ALL:", score_all)
                     # save model to checkpoint
-                    save_path = FLAGS.ckpt_dir + "model.ckpt"
-                    saver.save(sess, save_path, global_step=epoch)
+                    #save_path = FLAGS.ckpt_dir + "model.ckpt" #TODO temp remove==>only save checkpoint for each epoch once.
+                    #saver.save(sess, save_path, global_step=epoch)
             #epoch increment
             print("going to increment epoch counter....")
             sess.run(model.epoch_increment)
