@@ -33,15 +33,15 @@ find more about task, data or even start smart AI competition by check here:
 
  1) total examples, crime,relevant articles:
 
-  data_train: 155k
+      data_train: 155k
 
-  data_valid: 17k
+      data_valid: 17k
 
-  data_test: 33k
+      data_test: 33k
 
-  number of total [accusation]: 202
+      number of total [accusation]: 202
 
-  number of total [relevant_article]:183
+      number of total [relevant_article]:183
 
 
   2) length of inputs(facts of the law case, after word tokenize)
