@@ -367,7 +367,7 @@ Chinese Desc of Task:
 
   2) a single evaluation matrix(here micro and macro of f1 score) is important for evaluate how well you done on your task,
 
-    and to know how well it is when you changed something.
+  and to know how well it is when you changed something.
 
   3) add more here.
 
