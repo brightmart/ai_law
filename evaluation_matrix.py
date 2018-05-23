@@ -163,15 +163,15 @@ def compute_f1_macro_use_TFFPFN(label_dict):
     num_classes=len(label_dict)
     for label, tuplee in label_dict.items():
         TP,FP,FN=tuplee
-        f1_score=compute_f1(TP,FP,FN)
-        f1_dict[label]=f1_score
+        f1_score_onelabel=compute_f1(TP,FP,FN)
+        f1_dict[label]=f1_score_onelabel
     f1_score_sum=0.0
     for label,f1_score in f1_dict.items():
         f1_score_sum=f1_score_sum+f1_score
     f1_score=f1_score_sum/float(num_classes)
     return f1_score
 
-def compute_f1(TP_micro,FP_micro,FN_micro):
+def compute_f1(TP,FP,FN):
     """
     compute f1
     :param TP_micro: number.e.g. 200
@@ -179,9 +179,9 @@ def compute_f1(TP_micro,FP_micro,FN_micro):
     :param FN_micro: number.e.g. 200
     :return: f1_score: a scalar
     """
-    precison_micro=TP_micro/(TP_micro+FP_micro+small_value)
-    recall_micro=TP_micro/(TP_micro+FN_micro+small_value)
-    f1_score=(2*precison_micro*recall_micro)/(precison_micro+recall_micro+small_value)
+    precison=TP/(TP+FP+small_value)
+    recall=TP/(TP+FN+small_value)
+    f1_score=(2*precison*recall)/(precison+recall+small_value)
     return f1_score
 
 def compute_TF_FP_FN_micro(label_dict):
