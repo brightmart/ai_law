@@ -10,6 +10,12 @@ even for human, you need to pay lots of attention before you can tell what's it 
 
 and focus on most important information.
 
+
+if you have any suggestion or problem, a better idea on how to slove this problem,find a bug or want to find a team member, you are welcomed to can contact with me:
+
+brightmart@hotmail.com  or commit your code to this repository.
+
+
 1.Desc
 -------------------------------------------------------------------------
 this repository contain models that learn from law cases to predict:
