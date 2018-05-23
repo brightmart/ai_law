@@ -349,17 +349,15 @@ Chinese Desc of Task:
 12.TODO
 -------------------------------------------------------------------------
 
-   1) F1 score need check
+   1) tracking miss match of micro and macro of f1 score: balance micro and macro to maximize final f1 score
 
-   2) train loss up and down
+   2) error analysis: print and analysis error cases for each task, and get insight for improvement
 
-   3) target f1 score reach to 0.5
+   3) truncate or pad sequences in the beginning, or reverse
 
-   4) trancuate sequences in the begining not the end
+   4) preprocess document as serveral sentences before graph model
 
-   5) preprocess document as serveral sentences before graph model
-
-   6) try CNN and other models
+   5) try pure CNN or attention models to speed up training
 
 
 13.Conclusion
