@@ -151,7 +151,7 @@ def transform_multilabel_as_multihot(label_list,label_size):
     return result
 
 #use pretrained word embedding to get word vocabulary and labels, and its relationship with index
-def create_vocabulary(data_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False):
+def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False):
     """
     create vocabulary
     :param training_data_path:
@@ -205,7 +205,11 @@ def create_vocabulary(data_path,training_data_path,vocab_size,name_scope='cnn',t
 
         #3.get most frequency words
         vocab_list=c_inputs.most_common(vocab_size)
-        word_freq_file=codecs.open(cache_vocabulary_label_pik+"/"+'word_freq.txt',mode='a',encoding='utf-8')
+        word_vocab_file=predict_path+"/"+'word_freq.txt'
+        if os.path.exist(word_vocab_file):
+            print("word vocab file exists.going to delete it.")
+            os.remove(word_vocab_file)
+        word_freq_file=codecs.open(word_vocab_file,mode='a',encoding='utf-8')
         #put those words to dict
         for i,tuplee in enumerate(vocab_list):
             word,freq=tuplee

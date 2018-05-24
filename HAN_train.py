@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-#import sys
-#reload(sys)
-#sys.setdefaultencoding('utf-8') #gb2312
 #training the model.
 #process--->1.load data(X:list of lint,y:int). 2.create session. 3.feed data. 4.training (5.validation) ,(6.prediction)
 #import sys
@@ -9,27 +6,27 @@
 #sys.setdefaultencoding('utf8')
 import tensorflow as tf
 import numpy as np
-from HAN_model import HierarchicalAttention
-from data_util import create_vocabulary,load_data_multilabel,get_part_validation_data,imprisonment_mean,imprisonment_std
+from predictor.HAN_model import HierarchicalAttention
+from data_util import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data,imprisonment_mean,imprisonment_std
 import os
-#import word2vec
 from evaluation_matrix import *
 #configuration
-D = {}
 FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("data_path","./data","path of traning data.")
 tf.app.flags.DEFINE_string("traning_data_file","./data/data_train.json","path of traning data.")
 tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of validation data.")
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
+tf.app.flags.DEFINE_string("predict_path","./upload/predictor","path of traning data.")
+tf.app.flags.DEFINE_string("ckpt_dir","upload/predictor/checkpoint","checkpoint location for the model") #save to here, so make it easy to upload for test
+
+
 tf.app.flags.DEFINE_integer("vocab_size",60000,"maximum vocab size.")
 tf.app.flags.DEFINE_float("learning_rate",0.001,"learning rate")
 tf.app.flags.DEFINE_integer("batch_size", 64, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
-
-tf.app.flags.DEFINE_string("ckpt_dir","checkpoint/","checkpoint location for the model")
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length") #400 TODO
 tf.app.flags.DEFINE_integer("num_sentences",10,"number of sentences") #8 TODO
 tf.app.flags.DEFINE_integer("embed_size",128,"embedding size")
@@ -45,7 +42,7 @@ tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single l
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
 def main(_):
-    vocab_word2index, accusation_label2index,articles_label2index= create_vocabulary(FLAGS.data_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
+    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}
     vocab_size = len(vocab_word2index);print("cnn_model.vocab_size:",vocab_size);
