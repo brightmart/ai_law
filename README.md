@@ -300,7 +300,7 @@ HAN||
 
   upload for testing your model, run:
 
-     zip -r ai_law.zip predictor  ===>it will resources in directory predictor as a zip file.
+     zip -r ai_law.zip predictor  ===>it will zip all resources in directory predictor as a zip file.
 
 
 
