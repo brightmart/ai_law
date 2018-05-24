@@ -292,16 +292,24 @@ HAN||
 
      python HAN_train.py
 
-    it will report macro f1 score and micro f1 score when doing validation.
+    it will report macro f1 score and micro f1 score when doing validation, and save checkpoint to predictor/checkpoint
+
+  predict:
+
+     python3 main.py
+
+  upload for testing your model, run:
+
+     zip -r ai_law.zip predictor  ===>it will resources in directory predictor as a zip file.
 
 
 
 
 10.Environment
 -------------------------------------------------------------------------
-   python 2.7 + tensorflow 1.8
+   python 3 + tensorflow 1.8
 
-   for people use python3, just comment out three lines below in the begining of file:
+   for people use python2, you can just add below lines:
 
       import sys
 
