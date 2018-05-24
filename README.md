@@ -298,7 +298,7 @@ HAN||
 
      python3 main.py
 
-  upload for testing your model, run:
+  zip your model so that you can upload for testing purpose, run:
 
      zip -r ai_law.zip predictor  ===>it will zip all resources in directory predictor as a zip file.
 
