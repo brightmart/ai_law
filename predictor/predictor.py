@@ -12,7 +12,7 @@ class Predictor(object):
         """
         init method required. set batch_size, and load some resources.
         """
-        self.batch_size = 1
+        self.batch_size =128
         FLAGS = tf.app.flags.FLAGS
         tf.app.flags.DEFINE_string("ckpt_dir", "predictor/checkpoint/", "checkpoint location for the model")
         tf.app.flags.DEFINE_string("vocab_word_path", "predictor/word_freq.txt", "path of word vocabulary.")
@@ -83,7 +83,8 @@ class Predictor(object):
         deathpenalty_predicted=np.argmax(logits_deathpenalty[0]) #0 or 1
         lifeimprisonment_predicted=np.argmax(logits_lifeimprisonment[0]) #0 or 1
         #print("logits_imprisonment[0]:",logits_imprisonment[0])
-        imprisonment_predicted=int(round((logits_imprisonment[0]+imprisonment_mean)*imprisonment_std))
+        #print("")
+        imprisonment_predicted=int(round((logits_imprisonment[0]+imprisonment_mean))) #*imprisonment_std
         imprisonment=0
         if deathpenalty_predicted==1:
             imprisonment=-2
@@ -97,7 +98,63 @@ class Predictor(object):
         #4.return
         return accusations_predicted, articles_predicted, imprisonment
 
-    def predict(self, content): #get facts, use model to make a prediction.
+    def predict_with_model_batch(self,contents):
+        """
+        predict result use model
+        :param contents:  a list. each element is a string,which represent of fact of law case.
+        :return: a dict
+
+        """
+
+        model=self.model
+        result_list=[]
+        input_X=[]
+        #1.get fact, 1)tokenize,2)word to index, 3)pad &truncate
+        for i,fact in enumerate(contents):
+            input_list = token_string_as_list(fact)  # tokenize
+            x = [self.vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
+            x = pad_truncate_list(x, self.FLAGS.sentence_len, value=0.,truncating='pre')  # padding to max length.remove sequence that longer than max length from beginning.
+            input_X.append(x)
+        #2.feed data and get logit
+        feed_dict = {model.input_x: input_X,model.dropout_keep_prob: 1.0}
+        logits_accusations,logits_articles,logits_deathpenaltys,logits_lifeimprisonments,logits_imprisonments= self.sess.run([model.logits_accusation,model.logits_article,model.logits_deathpenalty,model.logits_lifeimprisonment,model.logits_imprisonment],feed_dict)
+        #logits_accusation:[batch_size,num_classes]-->logits[0].shape:[num_classes];logits_imprisonment:[batch_size]
+
+        #3.get label_index
+        #print("=====>logits_accusations.shape:",logits_accusations.shape) # (20, 202)
+        batch_size=len(contents)
+        for i in range(batch_size):
+            logits_accusation=logits_accusations[i] #TODO since batch_size=1, we only need to check first element.
+            accusations_predicted= [j+1 for j in range(len(logits_accusation)) if logits_accusation[j]>=0.5]  #TODO ADD ONE e.g.[2,12,13,10]
+            if len(accusations_predicted)<1:
+                accusations_predicted=[np.argmax(logits_accusation)+1] #TODO ADD ONE
+            logits_article=logits_articles[i]
+            articles_predicted= [j+1 for j in range(len(logits_article)) if logits_article[j]>=0.5]  ##TODO ADD ONE e.g.[2,12,13,10]
+            if len(articles_predicted)<1:
+                articles_predicted=[np.argmax(logits_article)+1] #TODO ADD ONE
+            deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]) #0 or 1
+            lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]) #0 or 1
+            #print("=====>logits_imprisonments[i]:",logits_imprisonments[i])
+            imprisonment_predicted=int(round((logits_imprisonments[i]+1.0)*33.0)) #*imprisonment_std)
+            imprisonment=0
+            if deathpenalty_predicted==1:
+                imprisonment=-2
+            elif lifeimprisonment_predicted==1:
+                imprisonment=-1
+            else:
+                imprisonment=imprisonment_predicted
+            dictt={}
+            dictt['accusation']=accusations_predicted
+            dictt['articles'] =articles_predicted
+            dictt['imprisonment'] =imprisonment
+            result_list.append(dictt)
+        #print("accusation_predicted:",accusations_predicted,";articles_predicted:",articles_predicted,";deathpenalty_predicted:",deathpenalty_predicted,";lifeimprisonment_predicted:",
+        #      lifeimprisonment_predicted,";imprisonment_predicted:",imprisonment_predicted,";imprisonment:",imprisonment)
+
+        #4.return
+        return result_list
+
+    def predictX(self, content): #get facts, use model to make a prediction.
         """
         standard predict method required.
         :param content:  a list. each element is a string,which represent of fact of law case.
@@ -111,6 +168,14 @@ class Predictor(object):
         #print(ans)
         return [ans]
 
+    def predict(self, contents): #get facts, use model to make a prediction.
+        """
+        standard predict method required.
+        :param content:  a list. each element is a string,which represent of fact of law case.
+        :return: a dict
+        """
+        result_list=self.predict_with_model_batch(contents)
+        return result_list
 #predict=Predictor()
 #content1=u"酒泉市肃州区人民检察院指控，1、2015年5月15日18时许，被告人孙某窜至酒泉市肃州区南大街蚂蚁服装店内，趁被害人沈某某不备，盗窃沈某某装在上衣口袋内的白色三星7109型手机一部，后将该手机以200元价格出售给一陌生男子。该手机价值1500元；2、2015年5月16日22时许，被告人孙某窜至酒泉市肃州区大明步行街贝某地婴童坊内，趁被害人马某某不备，盗窃马某某放在吧台旁的黄色女式包内的绿色钱包一个。钱包内装有人民币4000元、身份证、银行卡等物品，损失价值合计4000元。"
 #content2=u"成安县人民检察院指控，2013年2月11日15时许，犯罪嫌疑人吴某因与本村村民任某甲闹离婚发生矛盾，吴某伙同其亲戚到任某甲家对任某甲进行殴打，并在任某甲父亲任某丁外出回家时，与任某丁打架，在打架过程中，吴某用刀将任某丁左脸及左某划伤，后经法医鉴定，任某丁的伤已构成轻伤。公诉机关提供了相应的证据证明上述事实，要求本院依照《中华人民共和国刑法》第二百三十四之规定，以××追究被告人吴某的刑事责任。"
