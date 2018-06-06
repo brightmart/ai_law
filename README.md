@@ -307,19 +307,19 @@ find more about task, data or even start smart AI competition by check here:
 -------------------------------------------------------------------------
   1) HAN: hierarchical attention network(completed)
 
-   embedding-->word level bi-lstm encoder-->word level attention-->sentence level bi-lstm encoder-->sentence level attention
+        embedding-->word level bi-lstm encoder-->word level attention-->sentence level bi-lstm encoder-->sentence level attention
 
   2) TextCNN(multi-layers)
 
-   embedding-->CNN1(BN-->Relu)--->CNN2(BN-->Relu)--->Max-pooling
+       embedding-->CNN1(BN-->Relu)--->CNN2(BN-->Relu)--->Max-pooling
 
   3) c-gru: CNN followed by GRU
 
-   embedding--->CNN(BN-->Relu)--->bi-GRU
+       embedding--->CNN(BN-->Relu)--->bi-GRU
 
   4) gru-c: GRU followed by CNN
 
-   embedding-->bi-GRU--->CNN(BN--->Relu)
+       embedding-->bi-GRU--->CNN(BN--->Relu)
 
   5) simple_pooling
 
@@ -350,7 +350,7 @@ find more about task, data or even start smart AI competition by check here:
 
 Model |Accasation Score | Relevant Score | Penalty Score
 --|--|--|--|
-HAN||77.63 | 75.29 | 52.65
+HAN|77.63 | 75.29 | 52.65
 TextCNN|79.91 | 76.87 | 53.62
 c-gru| | |
 gru-c| | |
@@ -361,8 +361,7 @@ gru-c| | |
 
 8.Error Analysis
 ----------------------------------------------------------------
-
-
+   TODO
 
 
 9.Usage
@@ -483,16 +482,17 @@ Chinese Desc of Task:
 
 12.TODO
 -------------------------------------------------------------------------
+   0) normalize numbers for money to standard format or to some range
 
    1) tracking miss match of micro and macro of f1 score: balance micro and macro to maximize final f1 score
 
    2) error analysis: print and analysis error cases for each task, and get insight for improvement
 
-   3) truncate or pad sequences in the beginning, or reverse
+   3) truncate or pad sequences in the beginning, or reverse(DONE)
 
    4) preprocess document as serveral sentences before graph model
 
-   5) try pure CNN or attention models to speed up training
+   5) try pure CNN or attention models to speed up training(CNN DONE)
 
 
 13.Conclusion
