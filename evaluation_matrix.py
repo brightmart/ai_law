@@ -35,7 +35,8 @@ def compute_confuse_matrix(y_targetlabel_list_single,y_logit_array_single,label_
     #1.get target label and predict label
     y_target_labels=get_target_label_short(y_targetlabel_list_single) #e.g. y_targetlabel_list[0]=[2,12,88]
     #y_logit=y_logit_array_single #y_logit_array[0] #[202]
-    y_predict_labels=[i for i in range(len(y_logit_array_single)) if y_logit_array_single[i]>=0.5] #e.g.[2,12,13,10]
+    y_predict_labels=[i for i in range(len(y_logit_array_single)) if y_logit_array_single[i]>=0.50] #TODO 0.5PW e.g.[2,12,13,10]
+    #if len(y_predict_labels)<1:    y_predict_labels=[np.argmax(y_logit_array_single)] #TODO ADD 2018.05.29
     if random.choice([x for x in range(random_number)]) ==1:print(name+".y_target_labels:",y_target_labels,";y_predict_labels:",y_predict_labels) #debug purpose
 
     #2.count number of TP,FP,FN for each class
@@ -117,7 +118,7 @@ def compute_imprisonment_score(target_value,predict_value):
     """
     if random.choice([x for x in range(random_number)]) ==1:print("x.imprisonment_score.target_value:",target_value,";predict_value:",predict_value)
     score=0.0
-    v=np.abs(np.log(predict_value+1.0)-np.log(target_value+small_value))
+    v=np.abs(np.log(predict_value+1.0)-np.log(target_value+1.0))
     if v<=0.2:
         score=1.0
     elif v<=0.4:
@@ -150,7 +151,7 @@ def compute_f1_micro_use_TFFPFN(label_dict):
     :return: f1_micro: a scalar
     """
     TF_micro_accusation, FP_micro_accusation, FN_micro_accusation =compute_TF_FP_FN_micro(label_dict)
-    f1_micro_accusation = compute_f1(TF_micro_accusation, FP_micro_accusation, FN_micro_accusation)
+    f1_micro_accusation = compute_f1(TF_micro_accusation, FP_micro_accusation, FN_micro_accusation,'micro')
     return f1_micro_accusation
 
 def compute_f1_macro_use_TFFPFN(label_dict):
@@ -163,7 +164,7 @@ def compute_f1_macro_use_TFFPFN(label_dict):
     num_classes=len(label_dict)
     for label, tuplee in label_dict.items():
         TP,FP,FN=tuplee
-        f1_score_onelabel=compute_f1(TP,FP,FN)
+        f1_score_onelabel=compute_f1(TP,FP,FN,'macro')
         f1_dict[label]=f1_score_onelabel
     f1_score_sum=0.0
     for label,f1_score in f1_dict.items():
@@ -171,7 +172,7 @@ def compute_f1_macro_use_TFFPFN(label_dict):
     f1_score=f1_score_sum/float(num_classes)
     return f1_score
 
-def compute_f1(TP,FP,FN):
+def compute_f1(TP,FP,FN,compute_type):
     """
     compute f1
     :param TP_micro: number.e.g. 200
@@ -182,6 +183,9 @@ def compute_f1(TP,FP,FN):
     precison=TP/(TP+FP+small_value)
     recall=TP/(TP+FN+small_value)
     f1_score=(2*precison*recall)/(precison+recall+small_value)
+
+    if random.choice([x for x in range(50)]) == 1:print(compute_type,"precison:",str(precison),";recall:",str(recall),";f1_score:",f1_score)
+
     return f1_score
 
 def compute_TF_FP_FN_micro(label_dict):

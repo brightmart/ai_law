@@ -13,6 +13,8 @@ class Predictor(object):
         init method required. set batch_size, and load some resources.
         """
         self.batch_size =128
+
+
         FLAGS = tf.app.flags.FLAGS
         tf.app.flags.DEFINE_string("ckpt_dir", "predictor/checkpoint/", "checkpoint location for the model")
         tf.app.flags.DEFINE_string("vocab_word_path", "predictor/word_freq.txt", "path of word vocabulary.")
@@ -23,10 +25,16 @@ class Predictor(object):
         tf.app.flags.DEFINE_integer("decay_steps", 1000,"how many steps before decay learning rate.")
         tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
         tf.app.flags.DEFINE_integer("sentence_len", 400, "max sentence length")
-        tf.app.flags.DEFINE_integer("num_sentences", 10, "number of sentences")
-        tf.app.flags.DEFINE_integer("embed_size", 128, "embedding size")
+        tf.app.flags.DEFINE_integer("num_sentences", 16, "number of sentences")
+        tf.app.flags.DEFINE_integer("embed_size", 64, "embedding size")
         tf.app.flags.DEFINE_integer("hidden_size", 128, "hidden size")
+        tf.app.flags.DEFINE_integer("num_filters", 128, "number of filter for a filter map used in CNN.")
         tf.app.flags.DEFINE_boolean("is_training", False, "is traning.true:tranining,false:testing/inference")
+        tf.app.flags.DEFINE_string("model", "text_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
+        #tf.app.flags.DEFINE_boolean("is_training_flag", False, "is traning.true:tranining,false:testing/inference")
+
+        filter_sizes = [6, 7, 8, 9, 10]  # [30,40,50] #8
+        stride_length = 1
 
         #1.load label dict, restore model from checkpoint
         # 1.load label dict
@@ -47,56 +55,12 @@ class Predictor(object):
         config.gpu_options.allow_growth = True
 
         sess=tf.Session(config=config)
-        self.model = HierarchicalAttention(accusation_num_classes, article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes, FLAGS.learning_rate, self.batch_size,FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size, FLAGS.embed_size, FLAGS.hidden_size, FLAGS.is_training)
+        self.model = HierarchicalAttention(accusation_num_classes, article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes, FLAGS.learning_rate, self.batch_size,FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size, FLAGS.embed_size, FLAGS.hidden_size
+                                 ,num_filters = FLAGS.num_filters, model = FLAGS.model, filter_sizes = filter_sizes, stride_length = stride_length)
         saver = tf.train.Saver()
         saver.restore(sess, tf.train.latest_checkpoint(FLAGS.ckpt_dir))
         self.sess=sess
         self.FLAGS=FLAGS
-
-    def predict_with_model(self,content):
-        """
-        predict result use model
-        :param content:  a list. each element is a string,which represent of fact of law case.
-        :return: a dict
-
-        """
-        model=self.model
-        #1.get fact, 1)tokenize,2)word to index, 3)pad &truncate
-        fact=content[0]
-        #print("fact:%s" %fact)
-        input_list = token_string_as_list(fact)  # tokenize
-        x = [self.vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
-
-        input_x = pad_truncate_list(x, self.FLAGS.sentence_len, value=0.,truncating='pre')  # padding to max length.remove sequence that longer than max length from beginning.
-
-        #print("input_x:",input_x)
-        #2.feed data and get logit
-        feed_dict = {model.input_x: [input_x],model.dropout_keep_prob: 1.0}
-        logits_accusation,logits_article,logits_deathpenalty,logits_lifeimprisonment,logits_imprisonment= self.sess.run([model.logits_accusation,model.logits_article,model.logits_deathpenalty,model.logits_lifeimprisonment,model.logits_imprisonment],feed_dict)
-        #logits_accusation:[batch_size,num_classes]-->logits[0].shape:[num_classes];logits_imprisonment:[batch_size]
-
-        #3.get label_index
-        logits_accusation=logits_accusation[0] #since batch_size=1, we only need to check first element.
-        logits_article=logits_article[0]
-        accusations_predicted= [i for i in range(len(logits_accusation)) if logits_accusation[i]>=0.5]  # e.g.[2,12,13,10]
-        articles_predicted= [i for i in range(len(logits_article)) if logits_article[i]>=0.5]  # e.g.[2,12,13,10]
-        deathpenalty_predicted=np.argmax(logits_deathpenalty[0]) #0 or 1
-        lifeimprisonment_predicted=np.argmax(logits_lifeimprisonment[0]) #0 or 1
-        #print("logits_imprisonment[0]:",logits_imprisonment[0])
-        #print("")
-        imprisonment_predicted=int(round((logits_imprisonment[0]+imprisonment_mean))) #*imprisonment_std
-        imprisonment=0
-        if deathpenalty_predicted==1:
-            imprisonment=-2
-        elif lifeimprisonment_predicted==1:
-            imprisonment=-1
-        else:
-            imprisonment=imprisonment_predicted
-        #print("accusation_predicted:",accusations_predicted,";articles_predicted:",articles_predicted,";deathpenalty_predicted:",deathpenalty_predicted,";lifeimprisonment_predicted:",
-        #      lifeimprisonment_predicted,";imprisonment_predicted:",imprisonment_predicted,";imprisonment:",imprisonment)
-
-        #4.return
-        return accusations_predicted, articles_predicted, imprisonment
 
     def predict_with_model_batch(self,contents):
         """
@@ -105,25 +69,36 @@ class Predictor(object):
         :return: a dict
 
         """
-
         model=self.model
-        result_list=[]
         input_X=[]
         #1.get fact, 1)tokenize,2)word to index, 3)pad &truncate
-        for i,fact in enumerate(contents):
+        length_contents=len(contents)
+        #################################################
+        contents_padded=[]
+    #if length_contents<self.batch_size:
+        for i in range(self.batch_size):
+            if i<length_contents:
+                contents_padded.append(contents[i])
+            else:
+                #print(str(i),".going to padd")
+                contents_padded.append(contents[0]) #pad the list to batch_size,
+        #################################################
+
+        for i,fact in enumerate(contents_padded):
             input_list = token_string_as_list(fact)  # tokenize
             x = [self.vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
             x = pad_truncate_list(x, self.FLAGS.sentence_len, value=0.,truncating='pre')  # padding to max length.remove sequence that longer than max length from beginning.
             input_X.append(x)
         #2.feed data and get logit
-        feed_dict = {model.input_x: input_X,model.dropout_keep_prob: 1.0}
+        feed_dict = {model.input_x: input_X,model.dropout_keep_prob: 1.0,model.is_training_flag:False}
         logits_accusations,logits_articles,logits_deathpenaltys,logits_lifeimprisonments,logits_imprisonments= self.sess.run([model.logits_accusation,model.logits_article,model.logits_deathpenalty,model.logits_lifeimprisonment,model.logits_imprisonment],feed_dict)
         #logits_accusation:[batch_size,num_classes]-->logits[0].shape:[num_classes];logits_imprisonment:[batch_size]
 
         #3.get label_index
         #print("=====>logits_accusations.shape:",logits_accusations.shape) # (20, 202)
-        batch_size=len(contents)
-        for i in range(batch_size):
+        #batch_size=len(contents)
+        result_list=[]
+        for i in range(length_contents):
             logits_accusation=logits_accusations[i] #TODO since batch_size=1, we only need to check first element.
             accusations_predicted= [j+1 for j in range(len(logits_accusation)) if logits_accusation[j]>=0.5]  #TODO ADD ONE e.g.[2,12,13,10]
             if len(accusations_predicted)<1:
@@ -135,7 +110,7 @@ class Predictor(object):
             deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]) #0 or 1
             lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]) #0 or 1
             #print("=====>logits_imprisonments[i]:",logits_imprisonments[i])
-            imprisonment_predicted=int(round((logits_imprisonments[i]+1.0)*33.0)) #*imprisonment_std)
+            imprisonment_predicted=int(round(logits_imprisonments[i])) #*imprisonment_std)
             imprisonment=0
             if deathpenalty_predicted==1:
                 imprisonment=-2
@@ -154,19 +129,6 @@ class Predictor(object):
         #4.return
         return result_list
 
-    def predictX(self, content): #get facts, use model to make a prediction.
-        """
-        standard predict method required.
-        :param content:  a list. each element is a string,which represent of fact of law case.
-        :return: a dict
-        """
-        ans = {}
-        accusation,articles,imprisonment=self.predict_with_model(content)
-        ans['accusation'] = accusation
-        ans['articles'] = articles
-        ans['imprisonment'] = imprisonment
-        #print(ans)
-        return [ans]
 
     def predict(self, contents): #get facts, use model to make a prediction.
         """

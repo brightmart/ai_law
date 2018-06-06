@@ -4,11 +4,21 @@ all kinds of baseline models for smart law use AI.
 
 Update: Joint Model for law cases prediction is released. run python HAN_train.py to train the model for predict accusation, relevant articles and term of imprisonment.
 
-challenge of this task: the description of law case(called facts) is quite long, the average words is around 400. it not only long, but contain lots of information,
+challenge of this task:
 
-even for human, you need to pay lots of attention before you can tell what's it about. for machine it need to have ability to handle long distance dependence,
+   1) the description of law case(called facts) is quite long, the average words is around 400. it is not only long, but contain lots of information,
 
-and focus on most important information.
+      even for a human being, you need to pay lots of attention before you can tell what's it about. for machine it need to have ability to handle long distance dependency,
+
+      and pay attention on most important information.
+
+   2) multiple sub tasks are included in this task. you are not only to predict accusations, but also need to predict relevant articles and term of imprisonment.
+
+   3) this is a multi-label classification problem. given a fact, it may exists one or more than one accusations and serveral relevant articles.
+
+   4) this also a imbalanced classification problem, while some labels have many data, other labels only have few data. to get best performance, you are not only
+
+      to balanced precision and recall for a single label, but also need to balanced importance among different labels based on requirement or your evaluation matrix.
 
 
 if you have any suggestion or problem, a better idea on how to slove this problem,find a bug, or want to find a team member, you are welcomed to can contact with me:
@@ -18,7 +28,7 @@ brightmart@hotmail.com. you can also commit your code to this repository.
 
 1.Desc
 -------------------------------------------------------------------------
-this repository contain models that learn from law cases to predict:
+this repository contain models that learn from law cases to make a prediction:
 
    crime(accusation): which kinds of crime the bad guy did according to law system
 
@@ -243,23 +253,85 @@ find more about task, data or even start smart AI competition by check here:
      for detail above evaluation matrix, check evaluation_matrix.py
 
 
-4.Imbalance Classification for Skew Data TODO
+4.Imbalance Classification for Skew Data
 -------------------------------------------------------------------------
 
+  since some labels associate with many data, others may only contain few data. we will try to use sampling to handle this problem.
 
-5.Transfer Learning & Pretrained Word Embedding TODO
+  over sampling is used:
+
+  we will first get frequency of each label in accusation and relevant article. given a input, we will get label of accusation and relevant article, and there
+
+  frequency, then compute average value. we also set a threshold(e.g. 1500), add compute how many copy should we have in our training data(num_copy=threshold/average).
+
+  e.g. below is what we did:
+
+  input1:('freq_accusation:', 1230, 'freq_article:', 2973, ';num_copy:', 1)
+
+  input2:('freq_accusation:', 167, 'freq_article:', 3525, ';num_copy:', 1)
+
+  input3:('freq_accusation:', 282, 'freq_article:', 304, ';num_copy:', 5)
+
+  input4:('freq_accusation:', 225, 'freq_article:', 22, ';num_copy:', 12)
+
+  input5:('freq_accusation:', 489, 'freq_article:', 487, ';num_copy:', 3)
+
+  input6:('freq_accusation:', 1134, 'freq_article:', 1148, ';num_copy:', 1)
+
+
+  why we take average value for frequency of accusation and relevant article?
+
+      as accsuation and relevant articles are related in many cases, we will use average
+
+  check transform_data_to_index() under data_util.py
+
+
+
+5.Transfer Learning & Pretrained Word Embedding
 -------------------------------------------------------------------------
   download pretrained word embedding from https://github.com/Embedding/Chinese-Word-Vectors and enable flag 'use_embedding' during training.
 
+  or download from https://pan.baidu.com/s/1o7MWrnc, password: wzqv , choose '.bin' file, embedding size is 64.
+
+  command to import word embedding, especially for words contain chinese:
+
+  import gensim
+
+  from gensim.models import KeyedVectors
+
+  word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=True, unicode_errors='ignore')
 
 
-6.Models TODO
+
+6.Models
 -------------------------------------------------------------------------
-1) fastText
+  1) HAN: hierarchical attention network(completed)
 
-2) TextCNN
+   embedding-->word level bi-lstm encoder-->word level attention-->sentence level bi-lstm encoder-->sentence level attention
 
-3) HAN: hierarchical attention network(completed)
+  2) TextCNN(multi-layers)
+
+   embedding-->CNN1(BN-->Relu)--->CNN2(BN-->Relu)--->Max-pooling
+
+  3) c-gru: CNN followed by GRU
+
+   embedding--->CNN(BN-->Relu)--->bi-GRU
+
+  4) gru-c: GRU followed by CNN
+
+   embedding-->bi-GRU--->CNN(BN--->Relu)
+
+  5) simple_pooling
+
+    a) embedding-->max pooling
+
+    b) embedding-->mean pooling
+
+    c) embedding-->concat of max pooling and mean pooling
+
+  6) self-attention(transformer) TODO
+
+  7) Convolutional Sequence to Sequence Learning TODO
 
 
 
@@ -396,6 +468,8 @@ Chinese Desc of Task:
   3) <a href='https://github.com/facebookresearch/fastText'>fastText:Bag of Tricks for Efficient Text Classification</a>
 
   4) Hierarchical Attention Networks for Document Classification
+
+  4) Baseline Needs More Love: On Simple Word-Embedding-Based Modles and Associated Pooling Mechanisms
 
 
 

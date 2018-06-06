@@ -23,25 +23,30 @@ def token_string_as_list(string,tokenize_style='word'):
     listt=[x for x in listt if x.strip()]
     return listt
 
-def pad_truncate_list(x_list, maxlen, value=0,truncating='pre'):#padding='pre'
+def pad_truncate_list(x_list, maxlen, value=0,truncating='pre',padding='pre'):
     """
     :param x_list:e.g. [1,10,3,5,...]
     :return:result_list:a new list,length is maxlen
     """
     result_list=[0 for i in range(maxlen)] #[0,0,..,0]
     length_input=len(x_list)
-
-    #truncating
-    if truncating=='pre': #truncating from beggining
-        start_point = (length_input - maxlen) if length_input > maxlen else 0
+    if length_input>maxlen: #need to trancat===>no need to pad
+        start_point = (length_input - maxlen)
         x_list=x_list[start_point:]
-    else:#truncating at the end
-        x_list = x_list[0:maxlen]
-
-    for i,element in enumerate(x_list):
-        result_list[i]=element
-
+        for i, element in enumerate(x_list):
+            result_list[i] = element
+    else:#sequence is to short===>need to pad something===>no need to trancat. [1,2,3], max_len=1000.
+        x_list.reverse() #[3,2,1]
+        for i in range(length_input):
+            result_list[i] = x_list[i]
+        result_list.reverse()
     return result_list
+
+#x_list=[1,2,3] #[0, 0, 0, 0, 0, 0, 0, 1, 2, 3]
+#x_list=[1,2,3,4,5,6,7,8,9,10,11,12,13]#===>[4,5,6,7,8,9,10,11,12,13]
+#result_list=pad_truncate_list(x_list, 10, value=0,truncating='pre',padding='pre')
+#print(result_list)
+
 
 
 def load_word_vocab(file_path):
@@ -60,7 +65,7 @@ def load_word_vocab(file_path):
         if "::" in line:
             word=":"
         else:
-            word,_=line.split(":")
+            word,_=line.split(":") #wor,_="元:272339"
         vocab_word2index[word] = i + 2
     return vocab_word2index
 
