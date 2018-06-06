@@ -323,11 +323,13 @@ find more about task, data or even start smart AI competition by check here:
 
   5) simple_pooling
 
-    a) embedding-->max pooling
+    a) embedding-->max over each dimension of word embedding
 
-    b) embedding-->mean pooling
+    b) embedding-->mean over each dimension of word embedding
 
     c) embedding-->concat of max pooling and mean pooling
+
+    d) embedding-->mean over each context(context is define as words around itself)-->max over context for each dimension.
 
   6) self-attention(transformer) TODO
 
@@ -344,11 +346,16 @@ find more about task, data or even start smart AI competition by check here:
 ![alt text](https://github.com/brightmart/ai_law/blob/master/data/han_1000steps.jpg)
 
 
-Task |Model | F1 Score
---|--|--|
-fastText| |
-TextCNN| |
-HAN||
+ Performance on test env,online:
+
+Model |Accasation Score | Relevant Score | Penalty Score
+--|--|--|--|
+HAN||77.63 | 75.29 | 52.65
+TextCNN|79.91 | 76.87 | 53.62
+c-gru| | |
+gru-c| | |
+
+
 
 
 
@@ -365,6 +372,16 @@ HAN||
      python HAN_train.py
 
     it will report macro f1 score and micro f1 score when doing validation, and save checkpoint to predictor/checkpoint
+
+    optional parameters:
+
+    --model: the name of model. {han,text_cnn,c_gru,c_gru2,gru,pooling} [han]
+
+    --use_pretrained_embedding: whether use pretrained embedding or not. download one discussed on section #5, otherwise set it to False. {True,False} [True]
+
+    --embed_size: embedding size
+
+    --hidden_size: hidden size
 
   predict:
 
@@ -394,27 +411,60 @@ HAN||
 -------------------------------------------------------------------------
 Hierarchical Attention Network:
 
-Implementation of Hierarchical Attention Networks for Document Classification
+    Implementation of Hierarchical Attention Networks for Document Classification
 
-Structure:
+    Structure:
 
-embedding
+    embedding
 
-Word Encoder: word level bi-directional GRU to get rich representation of words
+    Word Encoder: word level bi-directional GRU to get rich representation of words
 
-Word Attention:word level attention to get important information in a sentence
+    Word Attention:word level attention to get important information in a sentence
 
-Sentence Encoder: sentence level bi-directional GRU to get rich representation of sentences
+    Sentence Encoder: sentence level bi-directional GRU to get rich representation of sentences
 
-Sentence Attention: sentence level attention to get important sentence among sentences
+    Sentence Attention: sentence level attention to get important sentence among sentences
 
-One Layer MLP for transform document representation to each sub task's features.
+    One Layer MLP for transform document representation to each sub task's features.
 
-FC+Softmax
+    FC+Softmax
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
+    ![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
 
-![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
+    ![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
+
+    check inference_han method from HAN_model.py under directory of predictor
+
+
+TextCNN(Multiple Layers):
+
+    Implementation of <a href="http://www.aclweb.org/anthology/D14-1181"> Convolutional Neural Networks for Sentence Classification </a>
+
+    Structure: embedding-->CNN1(BN-->Relu)--->CNN2(BN-->Relu)--->Max-pooling-->concat features--->Fully Connected Layer
+
+    In order to get very good result with TextCNN, you also need to read carefully about this paper <a href="https://arxiv.org/abs/1510.03820">A Sensitivity Analysis of (and Practitioners' Guide to) Convolutional Neural Networks for Sentence Classification</a>: it give you some insights of things that can affect performance. although you need to  change some settings according to your specific task.
+
+    Convolutional Neural Network is main building box for solve problems of computer vision. Now we will show how CNN can be used for NLP, in in particular, text classification. Sentence length will be different from one to another. So we will use pad to get fixed length, n. For each token in the sentence, we will use word embedding to get a fixed dimension vector, d. So our input is a 2-dimension matrix:(n,d). This is similar with image for CNN.
+
+    Firstly, we will do convolutional operation to our input. It is a element-wise multiply between filter and part of input. We use k number of filters, each filter size is a 2-dimension matrix (f,d). Now the output will be k number of lists. Each list has a length of n-f+1. each element is a scalar. Notice that the second dimension will be always the dimension of word embedding. We are using different size of filters to get rich features from text inputs. And this is something similar with n-gram features.
+
+    Secondly, we will do max pooling for the output of convolutional operation. For k number of lists, we will get k number of scalars.
+
+    Thirdly, we will concatenate scalars to form final features. It is a fixed-size vector. And it is independent from the size of filters we use.
+
+    Finally, we will use linear layer to project these features to per-defined labels.
+
+    ![alt text](https://github.com/brightmart/ai_law/blob/master/data/text_cnn_multiplelayers.jpg)
+
+
+    ![alt text](https://github.com/brightmart/text_classification/blob/master/images/TextCNN.JPG)
+
+
+
+    check inference_text_cnn method from HAN_model.py under directory of predictor
+
+
+
 
 
 Chinese Desc of Task:
