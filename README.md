@@ -429,9 +429,9 @@ Hierarchical Attention Network:
 
     FC+Softmax
 
-    ![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
 
-    ![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
+![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
 
     check inference_han method from HAN_model.py under directory of predictor
 
@@ -454,11 +454,10 @@ TextCNN(Multiple Layers):
 
     Finally, we will use linear layer to project these features to per-defined labels.
 
-    ![alt text](https://github.com/brightmart/ai_law/blob/master/data/text_cnn_multiplelayers.jpg)
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/text_cnn_multiplelayers.jpg)
 
 
-    ![alt text](https://github.com/brightmart/text_classification/blob/master/images/TextCNN.JPG)
-
+![alt text](https://github.com/brightmart/text_classification/blob/master/images/TextCNN.JPG)
 
 
     check inference_text_cnn method from HAN_model.py under directory of predictor
