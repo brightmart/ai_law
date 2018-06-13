@@ -111,7 +111,7 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
 
         # 3.transform relevant article.discrete
         article_list = json_string['meta']['relevant_articles']
-        article_list = [article_label2index[label] for label in article_list]
+        article_list = [article_label2index[int(label)] for label in article_list] #label-->int(label) #2018-06-13
         y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
 
         # 4.transform death penalty.discrete
@@ -307,6 +307,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
 
 def token_string_as_list(string,tokenize_style='word'):
     #string=string.decode("utf-8")
+    string=replace_money_value(string)  #TODO add normalize number ADD 2018.06.11
     length=len(string)
     if tokenize_style=='char':
         listt=[string[i] for i in range(length)]
@@ -370,6 +371,63 @@ def get_weight_freq_article(freq_accusation,freq_article):
         weight_artilce=1.0
     return weight_accusation,weight_artilce
 
+
+import re
+def replace_money_value(string):
+    #print("string:")
+    #print(string)
+    moeny_list = [1,2,5,7,10, 20, 30,50, 100, 200, 500, 800,1000, 2000, 5000,7000, 10000, 20000, 50000, 80000,100000,200000, 500000, 1000000,3000000,5000000,1000000000]
+    double_patten = r'\d+\.\d+'
+    int_patten = r'[\u4e00-\u9fa5,，.。；;]\d+[元块万千百十余，,。.;；]'
+    doubles=re.findall(double_patten,string)
+    ints=re.findall(int_patten,string)
+    ints=[a[1:-1] for a in ints]
+    #print(doubles+ints)
+    sub_value=0
+    for value in (doubles+ints):
+        for money in moeny_list:
+            if money >= float(value):
+                sub_value=money
+                break
+        string=re.sub(str(value),str(sub_value),string)
+    return string
+#replace_money_value(x)
+
+x="经审理查明，2012年上半年，被告人徐某使用蒋某提供的某某新农合本及身份证等证件，编造王某某甲亢性心脏病、脑溢血在中国人民解放军309医院的整套病历及住院费用证明，" \
+  "并让桐柏县大河镇卫生院负责新农合报销的工作人员李某帮其办理新农合报销手续。从而徐某报销出新农合资金52459元。随后徐某分给蒋某某现金5000元。新农合报销资料显示王某某于" \
+  "2012年6月2日至2012年7月16日在中国人民解放军第309医院以甲亢性心脏病、脑溢血住院，住院费用为95726.04元，新农合报销52459元。另查明，" \
+  "被告人徐某因犯××于2015年4月9日被桐柏县人民法院判处××，并处罚金人民币××元，追缴违法所得3758.7元。刑期自2014年10月18日起至2020年10月17日止。" \
+  "在河南省南阳市监狱服刑期间，发现徐某有上述漏罪。上述事实，被告人徐某在开庭审理过程中亦无异议，且有同案犯蒋某某的供述与辩解" \
+  "，桐柏县新农合关于王某某的新农合报销病历及材料及中国解放军第309医院出具的证明等书证，到案证明，刑事判决书，准予解回罪犯的函，" \
+  "被告人的常住人口基本信息等证据证实，足以认定。"
+#x='XXXX同时从蒋2015年12月11日19时30分许某的支9号楼付宝账户中擅自转账61300余元，34534元，3599.34元，11400.123元,得到93443.454万元大幅度发，阿道夫12200元啊，得到3314342万元哦'
+#result=replace_money_value(x)
+#result2=jieba.lcut(result)
+#for ss in result2:
+#    print(ss)
+
+#x='2018年9月7日到10号楼帮我拿1部价值5888元的手机，放到2单元，可以吗？'
+#x="唐河县人民检察院指控：（一）××。2015年1月31日，被告人罗某在唐河县农33020元业银行营业厅帮不会取款操作的鹿某某取款，罗某趁机将鹿某某银行卡上的2900元存款转入自己账户后逃离。为指控上述犯罪事实，公诉机关当庭宣读和出示了被告人的供述、接处警登记表、银行卡交易笔录、被害人的陈述、现场勘查记录等相关证据。（二）××。2015年6月17日，被告人罗某尾随出售香囊的贾某某伺机作案，当晚10时许，贾某某行至唐河县泗洲宾馆后面的道内时，罗某将贾某某身上所挎提包抢走，致贾某某倒地，嘴部、腿部受伤。为指控上述犯罪事实，公诉机关当庭宣读和出示了被告人的供述、证人证言、被害人陈述、接处警登记表、现场勘查笔录等相关证据。综合上述指控，公诉机关认为，被告人罗某的行为已构成××、××，一人犯数罪，提请本院依据《中华人民共和国刑法》××、××、××之规定处罚。"
+#result=replace_money_value(x)
+#print("result2:",result)
+
+#x='害人陈某1各项经济损失共计人民币35000元，并取得谅解'
+#result=normalize_money(x)
+#x='2某赔偿周某培各项损失30000元，取'
+#result=normalize_money(x)
+#x=' 同时从蒋某的支付宝账户中擅自转账1300余元。公'
+#result=normalize_money(x)
+#x=' 同时从蒋某的支付宝账户中擅自转账1300余元。公1400.123元'
+#result=normalize_money(x)
+#x='经鉴定，涉案轿车价值人民币11000元。'
+#result=normalize_money(x)
+#x="杭州市西湖区人民检察院指控，被告人黄某在大额债务无法归还、公司未正常经营的情况下，于2014年6月3日向被害人张某租赁宝马320i轿车一辆（价值人民币126000元）。后伪造张某的身份证、驾驶证，于同年6月6日，将车辆抵押给杭州德涵投资有限公司的吕营、王某，实际得款人民币100300元。被告人黄某将其中80000元用于归还债务，余款用于日常花销。被告人黄某的行为已构成××。对此指控，公诉机关当庭宣读和出示了证人证言、书证、鉴定意见等证据。"
+#result=normalize_money(x)
+#x='骗取他人财物共计11.98万元啊'
+#result=normalize_money(x)
+#x=''
+#result=normalize_money(x)
+#x=''
 #training_data_path='../data/sample_multiple_label3.txt'
 #vocab_size=100
 #create_voabulary(training_data_path,vocab_size)

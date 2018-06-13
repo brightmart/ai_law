@@ -36,12 +36,11 @@ tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
 tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
 
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
-tf.app.flags.DEFINE_integer("num_epochs",18,"number of epochs to run.")
+tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") #"data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin"
-tf.app.flags.DEFINE_string("word2vec_model_path2","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
-
+tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") #data_big/law_fasttext_model100.bin-->
+#tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 tf.app.flags.DEFINE_string("name_scope","cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
@@ -49,7 +48,7 @@ tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is
 tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 
-filter_sizes=[6, 7, 8, 9, 10]
+filter_sizes=[2,3,4,5] #,6,7,8]#[6, 7, 8, 9, 10]
 stride_length=1
 def main(_):
     vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
@@ -84,9 +83,9 @@ def main(_):
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
             print("Restoring Variables from Checkpoint.")
             saver.restore(sess,tf.train.latest_checkpoint(FLAGS.ckpt_dir))
-            #for i in range(2): #decay learning rate if necessary.
-            #    print(i,"Going to decay learning rate by half.")
-                #sess.run(model.learning_rate_decay_half_op)
+            for i in range(2): #decay learning rate if necessary.
+                print(i,"Going to decay learning rate by half.")
+                sess.run(model.learning_rate_decay_half_op)
                 #sess.run(model.learning_rate_decay_half_op)
 
         else:
@@ -127,7 +126,7 @@ def main(_):
                     print("Loss_accusation:%.3f\tLoss_article:%.3f\tLoss_deathpenalty:%.3f\tLoss_lifeimprisonment:%.3f\tLoss_imprisonment:%.3f\tL2_loss:%.3f\tCurrent_loss:%.3f\t"
                           %(loss_accusation,loss_article,loss_deathpenalty,loss_lifeimprisonment,loss_imprisonment,l2_loss,current_loss))
                 ########################################################################################################
-                if start!=0 and start%(500*FLAGS.batch_size)==0: # eval every 400 steps.
+                if start!=0 and start%(1500*FLAGS.batch_size)==0: # eval every 400 steps.
                     loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle, f1_a_death, f1_i_death, f1_a_life, f1_i_life, score_penalty = \
                         do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes)
                     accasation_score=((f1_macro_accasation+f1_micro_accasation)/2.0)*100.0
@@ -167,7 +166,7 @@ def main(_):
                     print("going to save check point.")
                     saver.save(sess,save_path,global_step=epoch)
                     accasation_score_best = accasation_score
-            if (epoch == 2 or epoch == 4 or epoch == 7 or epoch == 13):
+            if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
                 for i in range(2):
                     print(i, "Going to decay learning rate by half.")
                     sess.run(model.learning_rate_decay_half_op)
@@ -224,7 +223,7 @@ def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classe
 def assign_pretrained_word_embedding(sess,vocabulary_index2word,vocab_size,model,word2vec_model_path,embedding_instance):
     print("using pre-trained word emebedding.started.word2vec_model_path:",word2vec_model_path)
     ##word2vec_model = word2vec.load(word2vec_model_path, kind='bin')
-    word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=True, unicode_errors='ignore')  #TODO binary=True
+    word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=True, unicode_errors='ignore')  #
     word2vec_dict = {}
     count_=0
     for word, vector in zip(word2vec_model.vocab, word2vec_model.vectors):

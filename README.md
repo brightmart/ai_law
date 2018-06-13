@@ -149,7 +149,11 @@ find more about task, data or even start smart AI competition by check here:
 
          imprisonment_test=(imprisonment_test+imprisonment_mean)*imprisonment_std
 
+  6) normalize value of money:
 
+     there are lots of int and float in this data related to money. such as 12343 or 3446.56, to make it easy for the model to learn it, we normalize
+
+     int and float. for example to 10000 or 3000. check method replace_money_value in data_util.py
 
 3.Evaluation: F1 score(Micro,Macro)
 -------------------------------------------------------------------------
@@ -313,6 +317,10 @@ find more about task, data or even start smart AI competition by check here:
 
        embedding-->CNN1(BN-->Relu)--->CNN2(BN-->Relu)--->Max-pooling
 
+  3) DPCNN: deep pyramid cnn for text categorization
+
+      text region embedding-->CNN1.1-->CNN2.1-->(Pooling/2-->CONV-->CONV)*N-->Pooling
+
   3) c-gru: CNN followed by GRU
 
        embedding--->CNN(BN-->Relu)--->bi-GRU
@@ -462,6 +470,20 @@ TextCNN(Multiple Layers):
     check inference_text_cnn method from HAN_model.py under directory of predictor
 
 
+DPCNN:
+
+   <a href='http://www.aclweb.org/anthology/P/P17/P17-1052.pdf'>Deep Pyramid Convolutional Neural Networks for Text Categorization</a>
+
+    text region embedding-->CNN1.1-->CNN2.1-->(Pooling/2-->CONV-->CONV)*N-->Pooling
+
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg)
+
+
+
+
+
+
+
 
 
 
@@ -518,9 +540,9 @@ Chinese Desc of Task:
 
   4) Hierarchical Attention Networks for Document Classification
 
-  4) Baseline Needs More Love: On Simple Word-Embedding-Based Modles and Associated Pooling Mechanisms
+  5) Baseline Needs More Love: On Simple Word-Embedding-Based Modles and Associated Pooling Mechanisms
 
-
+  6) Deep Pyramid Convolutional Neural Networks for Text Categorization
 
 if you are smart or can contribute new ideas, join with us.
 
