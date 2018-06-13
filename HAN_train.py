@@ -38,7 +38,7 @@ tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
-tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
+tf.app.flags.DEFINE_boolean("use_pretrained_embedding",False,"whether to use embedding or not.")
 tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") #data_big/law_fasttext_model100.bin-->
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 tf.app.flags.DEFINE_string("name_scope","cnn","name scope value.")
@@ -47,8 +47,9 @@ tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is
 
 tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
+#you can change this
+filter_sizes=[2,3,4,5,6,7,8]# [6, 7, 8, 9, 10]
 
-filter_sizes=[2,3,4,5] #,6,7,8]#[6, 7, 8, 9, 10]
 stride_length=1
 def main(_):
     vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
