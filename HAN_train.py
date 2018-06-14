@@ -48,7 +48,7 @@ tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is
 tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
-filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
+filter_sizes=[6, 7, 8, 9, 10]
 
 stride_length=1
 def main(_):

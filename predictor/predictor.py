@@ -33,7 +33,7 @@ class Predictor(object):
         tf.app.flags.DEFINE_string("model", "text_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
         #tf.app.flags.DEFINE_boolean("is_training_flag", False, "is traning.true:tranining,false:testing/inference")
 
-        filter_sizes = [2,3,4,5]#,6,7,8]#[2,3,4,5]#[6, 7, 8, 9, 10]  # [30,40,50] #8
+        filter_sizes =[6, 7, 8, 9, 10]  # [30,40,50] #8
         stride_length = 1
 
         #1.load label dict, restore model from checkpoint
