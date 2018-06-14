@@ -354,7 +354,7 @@ find more about task, data or even start smart AI competition by check here:
 ![alt text](https://github.com/brightmart/ai_law/blob/master/data/han_1000steps.jpg)
 
 
- Performance on test env,online:
+Performance on test env(small data, 155k training data),online:
 
 Model |Accasation Score | Relevant Score | Penalty Score
 --|--|--|--|
@@ -363,6 +363,12 @@ TextCNN|79.91 | 76.87 | 53.62
 c-gru| | |
 gru-c| | |
 
+
+Performance on test env(big data, 1.5 million training data),online:
+
+Model |Accasation Score | Relevant Score | Penalty Score | Total Score
+--|--|--|--|
+TextCNN|84.51 | 82.20 | 67.60 | 234.31
 
 
 
