@@ -451,6 +451,9 @@ Notice: offline score is lower than online score for about 4.0.
 
 ![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
 
+<img src="https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg" width=256 height=256 />
+
+
 ![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
 
     check inference_han method from HAN_model.py under directory of predictor
