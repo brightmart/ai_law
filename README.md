@@ -359,7 +359,7 @@ Performance on test env(small data, 155k training data),online:
 Model |Accasation Score | Relevant Score | Penalty Score
 --|--|--|--|
 HAN|77.63 | 75.29 | 52.65
-TextCNN|79.91 | 76.87 | 53.62
+TextCNN(multiple layers)|79.91 | 76.87 | 53.62
 c-gru| | |
 gru-c| | |
 
@@ -369,7 +369,7 @@ Performance on test env(big data, 1.5 million training data),online:
 
 Model |Accasation Score | Relevant Score | Penalty Score | Total Score
 --|--|--|--|--|
-TextCNN|84.51 | 82.20 | 67.60 | 234.31
+TextCNN(multiple layers)|84.51 | 82.20 | 67.60 | 234.31
 
 
 
