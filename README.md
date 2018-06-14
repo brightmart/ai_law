@@ -355,6 +355,7 @@ find more about task, data or even start smart AI competition by check here:
 
 
 Performance on test env(small data, 155k training data),online:
+
 Model |Accasation Score | Relevant Score | Penalty Score
 --|--|--|--|
 HAN|77.63 | 75.29 | 52.65
@@ -365,6 +366,7 @@ gru-c| | |
 
 
 Performance on test env(big data, 1.5 million training data),online:
+
 Model |Accasation Score | Relevant Score | Penalty Score | Total Score
 --|--|--|--|--|
 TextCNN|84.51 | 82.20 | 67.60 | 234.31
