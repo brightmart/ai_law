@@ -48,10 +48,11 @@ tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is
 tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
-filter_sizes=[6, 7, 8, 9, 10]
+filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
 
 stride_length=1
 def main(_):
+    print("model:",FLAGS.model)
     vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}

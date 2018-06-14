@@ -1,10 +1,13 @@
 AI_LAW
 -------------------------------------------------------------------------
-all kinds of baseline models for smart law use AI.
+all kinds of baseline models for long text classificaiton( text categorization)
 
-Update: Joint Model for law cases prediction is released. run python HAN_train.py to train the model for predict accusation, relevant articles and term of imprisonment.
 
-challenge of this task:
+Update: Joint Model for law cases prediction is released.
+
+run python HAN_train.py to train the model for predict accusation, relevant articles and term of imprisonment.
+
+challenges of this task:
 
    1) the description of law case(called facts) is quite long, the average words is around 400. it is not only long, but contain lots of information,
 
@@ -95,45 +98,45 @@ find more about task, data or even start smart AI competition by check here:
 
   4) Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
 
-          盗窃:10051
+        Theft: 10051
 
-          走私、贩卖、运输、制造毒品:8872
+        Smuggling, trafficking, transporting, and making drugs: 8872
 
-          故意伤害:6377
+        Intentional injury: 6377
 
-          抢劫:5020
+        Robbery: 5020
 
-          诈骗:3536
+        Fraud: 3536
 
-          受贿:3496
+        Bribery: 3496
 
-          寻衅滋事:3290
+        Provocation: 3290
 
-          危险驾驶:2758
+        Dangerous driving: 2758
 
-          组织、强迫、引诱、容留、介绍卖淫:2647
+        Organization, coercion, seduction, shelter, and introduction of prostitution: 2647
 
-          制造、贩卖、传播淫秽物品:2617
+        Manufacture, trafficking, and Disseminating Obscene Articles: 2617
 
-          容留他人吸毒:2597
+        Take drugs for others: 2597
 
-          交通肇事:2562
+        Traffic accident: 2562
 
-          贪污:2391
+        Embezzlement: 2391
 
-          非法持有、私藏枪支、弹药:2349
+        Illegal possession, possession of firearms, ammunition: 2349
 
-          故意杀人:2282
+        Intentional homicide: 2282
 
-          开设赌场:2259
+        Opening casinos: 2259
 
-          非法持有毒品:2203
+        Illegal possession of drugs: 2203
 
-          职务侵占:2197
+        Occupation encroachment: 2197
 
-          强奸:2192
+        Rape: 2192
 
-          伪造、变造、买卖国家机关公文、证件、印章:2153
+        Falsification, alteration, sale and purchase of official documents, documents and seals of state organs: 2153
 
   5) preprocess value for imprisonment.
 
@@ -369,9 +372,13 @@ Performance on test env(big data, 1.5 million training data),online:
 
 Model |Accasation Score | Relevant Score | Penalty Score | Total Score
 --|--|--|--|--|
-TextCNN(multiple layers)|84.51 | 82.20 | 67.60 | 234.31
+TextCNN-multiple layers(online)|84.51 | 82.20 | 67.60 | 234.31
+Deep Pyramid CNN(offline)|89.0 | 86.4 | 78.6 | 254
+Hierarchical Attention Network(offline)|85.1 | 84.0 | 79.2 | 248.3
 
+Notice: offline score is lower than online score for about 4.0.
 
+ 89.03954996862663, ';2.Article Score:', 86.38077500531911, ';3.Penalty Score:', 78.64466689362311, ';Score ALL:', 254.06499186756886)
 
 
 8.Error Analysis
@@ -389,9 +396,9 @@ TextCNN(multiple layers)|84.51 | 82.20 | 67.60 | 234.31
 
     optional parameters:
 
-    --model: the name of model. {han,text_cnn,c_gru,c_gru2,gru,pooling} [han]
+    --model: the name of model you will use. {han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling} [han]
 
-    --use_pretrained_embedding: whether use pretrained embedding or not. download one discussed on section #5, otherwise set it to False. {True,False} [True]
+    --use_pretrained_embedding: whether use pretrained embedding or not. download it as discussed on section #5, otherwise set it to False. {True,False} [True]
 
     --embed_size: embedding size
 
@@ -403,8 +410,7 @@ TextCNN(multiple layers)|84.51 | 82.20 | 67.60 | 234.31
 
   zip your model so that you can upload for testing purpose, run:
 
-     zip -r ai_law.zip predictor  ===>it will zip all resources in directory predictor as a zip file.
-
+     zip -r ai_law_predictor.zip predictor  ===>it will zip all resources in directory predictor/ as a zip file.
 
 
 
@@ -423,7 +429,7 @@ TextCNN(multiple layers)|84.51 | 82.20 | 67.60 | 234.31
 
 11.Model Details
 -------------------------------------------------------------------------
-Hierarchical Attention Network:
+1).Hierarchical Attention Network:
 
     Implementation of Hierarchical Attention Networks for Document Classification
 
@@ -450,7 +456,7 @@ Hierarchical Attention Network:
     check inference_han method from HAN_model.py under directory of predictor
 
 
-TextCNN(Multiple Layers):
+2).TextCNN(Multiple Layers):
 
     Implementation of <a href="http://www.aclweb.org/anthology/D14-1181"> Convolutional Neural Networks for Sentence Classification </a>
 
@@ -477,36 +483,56 @@ TextCNN(Multiple Layers):
     check inference_text_cnn method from HAN_model.py under directory of predictor
 
 
-DPCNN:
+3)DPCNN: Deep Pyramid CNN
 
    <a href='http://www.aclweb.org/anthology/P/P17/P17-1052.pdf'>Deep Pyramid Convolutional Neural Networks for Text Categorization</a>
 
     text region embedding-->CNN1.1-->CNN2.1-->(Pooling/2-->CONV-->CONV)*N-->Pooling
 
+    this model is used for text categorization, you can think it is a text classification model with text length is quite long.
+
+    basicly, it is a deep convolutional neural networks with repeat of building block: max-pooling and multiple layers of CNN.
+
+    to make it easy for train this deep model, it also used skip connection as ResNet does. different from other deep models,
+
+    conventionally when you reduce space size(input size for each layer), we will also increase depth of channels, so that computation resource in each layer is fixed.
+
+    in deep pyramid CNN, it keep depth of channels, and gradually recuce space size(input size).
+
+    main features of the model:
+
+    a.downsampling with the number of feature maps fixed ===> reduce computation. as total computation time is twice
+
+    the computation time of a single block.
+
+    b. shortcut connections with pre-activation ====> so that it can train very deep neural network, similiar with ResNet.
+
+    c. no need for dimension matching ===> although skip connection is used, but dimension is fixed(e.g. 250).
+
+    d. text region embedding: embedding of a region of text convering one or more words.
+
+
 ![alt text](https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg)
 
+![alt text](https://github.com/brightmart/ai_law/blob/master/data/deep_pyramid_compare.jpg)
 
 
 
-
-
-
-
-
-
-Chinese Desc of Task:
+China law research cup judicial artificial intelligence challenge:
 -------------------------------------------------------------------------
-“中国法研杯”司法人工智能挑战赛
 
-挑战赛任务：
+    Task 1 crime prediction: predict the accused's conviction according to the description and facts of the case in the criminal legal documents;
 
-任务一  罪名预测：根据刑事法律文书中的案情描述和事实部分，预测被告人被判的罪名；
+    Task 2 Recommendation of the relevant law: to predict the relevant laws in this case according to the description and facts of the case in the
 
-任务二  法条推荐：根据刑事法律文书中的案情描述和事实部分，预测本案涉及的相关法条；
+    criminal legal documents;
 
-任务三  刑期预测：根据刑事法律文书中的案情描述和事实部分，预测被告人的刑期长短。
+    Task 3 time of imprisonment:  predict the defendant's sentence length.
 
-数据集共包括268万刑法法律文书，共涉及183条罪名，202条法条，刑期长短包括0-25年、无期、死刑.
+    Data set including 2.68 million criminal law legal documents, criminal 183, relevant article 202 of law, sentence length including
+
+     0-25 years, life imprisonment, sentence to death.
+
 
 
 12.TODO
@@ -545,11 +571,11 @@ Chinese Desc of Task:
 
   3) <a href='https://github.com/facebookresearch/fastText'>fastText:Bag of Tricks for Efficient Text Classification</a>
 
-  4) Hierarchical Attention Networks for Document Classification
+  4) <a href='https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf'>Hierarchical Attention Networks for Document Classification</a>
 
   5) Baseline Needs More Love: On Simple Word-Embedding-Based Modles and Associated Pooling Mechanisms
 
-  6) Deep Pyramid Convolutional Neural Networks for Text Categorization
+  6) <a href='http://www.aclweb.org/anthology/P/P17/P17-1052.pdf'>Deep Pyramid Convolutional Neural Networks for Text Categorization</a>
 
 if you are smart or can contribute new ideas, join with us.
 

@@ -58,6 +58,7 @@ class HierarchicalAttention:
         self.decay_steps, self.decay_rate = decay_steps, decay_rate
 
         self.instantiate_weights()
+        print("model====>:",self.model)
         if self.model=='gru':
             print("going to use model:gru model")
             self.logits_accusation,self.logits_article,self.logits_deathpenalty,self.logits_lifeimprisonment,self.logits_imprisonment = self.inference_gru()  # [None, self.label_size]. main computation graph is here.
@@ -235,9 +236,9 @@ class HierarchicalAttention:
         # 4.max pooling
         seq_length1 = conv.get_shape().as_list()[1]  # sequence length after multiple layers of conv and pooling
         seq_length2 = conv.get_shape().as_list()[2]  # sequence length after multiple layers of conv and pooling
-        print("before.final.pooling:", conv)
+        print("before.final.pooling:", conv) #(256, 25, 4, 16)
         pooling = tf.nn.max_pool(conv, ksize=[1, seq_length1, seq_length2, 1], strides=[1, 1, 1, 1], padding='VALID',name="pool")  # [batch_size,hpcnn_number_filters]
-        pooling = tf.squeeze(pooling)
+        pooling = tf.squeeze(pooling) #(256, 16)
         print("pooling.final:", pooling)
 
         # 5.classifier
@@ -287,7 +288,7 @@ class HierarchicalAttention:
             print(layer_index, "dpcnn_pooling_two_conv.pooling:", pooling)
 
             # 2. two layer of conv
-            conv = self.dpcnn_two_layers_conv(pooling)
+            conv = self.dpcnn_two_layers_conv(pooling,double_num_filters=False) #TODO double num_filters
             # print("dpcnn_pooling_two_conv.layer_index", layer_index, "conv:", conv)
 
             # 3. skip connection and activation
@@ -296,7 +297,7 @@ class HierarchicalAttention:
             conv = tf.nn.relu(tf.nn.bias_add(conv, b),"relu-poolcnn")  # shape:[batch_size,total_sequence_length/2,embed_size/2,hpcnn_number_filters]
         return conv
 
-    def dpcnn_two_layers_conv(self, inputs):
+    def dpcnn_two_layers_conv(self, inputs,double_num_filters=False):
         """
         two layers of conv
         inputs:[batch_size,total_sequence_length,embed_size,dimension]. e.g.(128, 400, 64,1)-->[128,200,32,250]
@@ -306,17 +307,21 @@ class HierarchicalAttention:
         # filter1's first three dimension apply to [total_sequence_length, embed_size, 1] of embedding_documents
         print("dpcnn_two_layers_conv.inputs:", inputs)  # (128, 400, 64, 250)
         channel = inputs.get_shape().as_list()[-1]
-        filter1 = tf.get_variable("filter1-%s" % self.hpcnn_filter_size,[self.hpcnn_filter_size, 1, channel, self.hpcnn_number_filters],initializer=self.initializer)
+        if double_num_filters:
+            hpcnn_number_filters =channel * 2
+        else:
+            hpcnn_number_filters=self.hpcnn_number_filters
+        filter1 = tf.get_variable("filter1-%s" % self.hpcnn_filter_size,[self.hpcnn_filter_size, 1, channel, hpcnn_number_filters],initializer=self.initializer)
         conv1 = tf.nn.conv2d(inputs, filter1, strides=[1, self.stride_length, 1, 1], padding="SAME",name="conv")  # shape:[batch_size,total_sequence_length,embed_size,hpcnn_number_filters]
         conv1 = tf.contrib.layers.batch_norm(conv1, is_training=self.is_training_flag, scope='cnn1')
 
         print("dpcnn_two_layers_conv.conv1:", conv1)  # (128, 400, 64, 250)
-        b1 = tf.get_variable("b-cnn-%s" % self.hpcnn_number_filters, [self.hpcnn_number_filters])
+        b1 = tf.get_variable("b-cnn-%s" % hpcnn_number_filters, [hpcnn_number_filters])
         conv1 = tf.nn.relu(tf.nn.bias_add(conv1, b1),"relu1")  # shape:[batch_size,total_sequence_length,embed_size,hpcnn_number_filters]
 
         # conv2
         # filter2's first three dimension apply to:[total_sequence_length,embed_size,hpcnn_number_filters] of conv1
-        filter2 = tf.get_variable("filter2-%s" % self.hpcnn_filter_size,[self.hpcnn_filter_size, 1, self.hpcnn_number_filters, self.hpcnn_number_filters],initializer=self.initializer)
+        filter2 = tf.get_variable("filter2-%s" % self.hpcnn_filter_size,[self.hpcnn_filter_size, 1, hpcnn_number_filters, hpcnn_number_filters],initializer=self.initializer)
         conv2 = tf.nn.conv2d(conv1, filter2, strides=[1, self.stride_length, 1, 1], padding="SAME",name="conv2")  # shape:[batch_size,stotal_sequence_length,embed_size,hpcnn_number_filters]
         conv2 = tf.contrib.layers.batch_norm(conv2, is_training=self.is_training_flag, scope='cnn2')
 
