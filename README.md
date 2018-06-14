@@ -367,7 +367,7 @@ gru-c| | |
 Performance on test env(big data, 1.5 million training data),online:
 
 Model |Accasation Score | Relevant Score | Penalty Score | Total Score
---|--|--|--|
+--|--|--|--|--|
 TextCNN|84.51 | 82.20 | 67.60 | 234.31
 
 
