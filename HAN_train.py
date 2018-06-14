@@ -45,10 +45,10 @@ tf.app.flags.DEFINE_string("name_scope","cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,c_gru,c_gru2,gru,pooling")
+tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
-filter_sizes=[6, 7, 8, 9, 10]
+filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
 
 stride_length=1
 def main(_):
@@ -127,7 +127,7 @@ def main(_):
                     print("Loss_accusation:%.3f\tLoss_article:%.3f\tLoss_deathpenalty:%.3f\tLoss_lifeimprisonment:%.3f\tLoss_imprisonment:%.3f\tL2_loss:%.3f\tCurrent_loss:%.3f\t"
                           %(loss_accusation,loss_article,loss_deathpenalty,loss_lifeimprisonment,loss_imprisonment,l2_loss,current_loss))
                 ########################################################################################################
-                if start!=0 and start%(1500*FLAGS.batch_size)==0: # eval every 400 steps.
+                if start!=0 and start%(2000*FLAGS.batch_size)==0: # eval every 400 steps.
                     loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle, f1_a_death, f1_i_death, f1_a_life, f1_i_life, score_penalty = \
                         do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes)
                     accasation_score=((f1_macro_accasation+f1_micro_accasation)/2.0)*100.0
@@ -167,7 +167,8 @@ def main(_):
                     print("going to save check point.")
                     saver.save(sess,save_path,global_step=epoch)
                     accasation_score_best = accasation_score
-            if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
+            #if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
+            if (epoch == 1 or epoch == 3 or epoch == 6 or epoch == 9 or epoch == 12 or epoch == 18):
                 for i in range(2):
                     print(i, "Going to decay learning rate by half.")
                     sess.run(model.learning_rate_decay_half_op)
