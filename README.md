@@ -517,9 +517,9 @@ Notice: offline score is lower than online score for about 4.0.
     d. text region embedding: embedding of a region of text convering one or more words.
 
 
-<img src="https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg"  width="60%" height="60%" />
+<img src="https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg"  width="50%" height="50%" />
 
-<img src="https://github.com/brightmart/ai_law/blob/master/data/deep_pyramid_compare.jpg"  width="60%" height="60%" />
+<img src="https://github.com/brightmart/ai_law/blob/master/data/deep_pyramid_compare.jpg"  width="70%" height="70%" />
 
 
 
