@@ -9,7 +9,7 @@ class HierarchicalAttention:
     def __init__(self,  accusation_num_classes,article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,learning_rate,
                         batch_size, decay_steps, decay_rate, sequence_length, num_sentences,vocab_size, embed_size,hidden_size,
                         initializer=tf.random_normal_initializer(stddev=0.1),clip_gradients=1.0,max_pooling_style='max_pooling',
-                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=16,num_repeat=4):#0.01
+                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=32,num_repeat=4):#0.01
         """init all hyperparameter here"""
         # set hyperparamter
         self.accusation_num_classes = accusation_num_classes

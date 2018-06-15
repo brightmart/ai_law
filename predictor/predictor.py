@@ -12,11 +12,11 @@ class Predictor(object):
         """
         init method required. set batch_size, and load some resources.
         """
-        self.batch_size =1024
+        self.batch_size =512
 
 
         FLAGS = tf.app.flags.FLAGS
-        tf.app.flags.DEFINE_string("ckpt_dir", "predictor/checkpoint_big/", "checkpoint location for the model")
+        tf.app.flags.DEFINE_string("ckpt_dir", "predictor/checkpoint_textcnn_big256/", "checkpoint location for the model")
         tf.app.flags.DEFINE_string("vocab_word_path", "predictor/word_freq.txt", "path of word vocabulary.")
         tf.app.flags.DEFINE_string("accusation_label_path", "predictor/accu.txt", "path of accusation labels.")
         tf.app.flags.DEFINE_string("article_label_path", "predictor/law.txt", "path of law labels.")
@@ -27,13 +27,23 @@ class Predictor(object):
         tf.app.flags.DEFINE_integer("sentence_len", 400, "max sentence length")
         tf.app.flags.DEFINE_integer("num_sentences", 16, "number of sentences")
         tf.app.flags.DEFINE_integer("embed_size", 256, "embedding size") #64
-        tf.app.flags.DEFINE_integer("hidden_size", 256, "hidden size")  #128
+        tf.app.flags.DEFINE_integer("hidden_size", 256, "hidden size") #128
         tf.app.flags.DEFINE_integer("num_filters", 256, "number of filter for a filter map used in CNN.") #128
+
+        tf.app.flags.DEFINE_integer("embed_size_dpcnn", 64, "embedding size")
+        tf.app.flags.DEFINE_integer("hidden_size_dpcnn", 128, "hidden size")
+        #tf.app.flags.DEFINE_integer("num_filters_big", 128, "number of filter for a filter map used in CNN.")
+        tf.app.flags.DEFINE_string("model_dpcnn", "dp_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
+        tf.app.flags.DEFINE_string("ckpt_dir_dpcnn", "predictor/checkpoint_dpcnn_big32/", "checkpoint location for the model")
+
+
         tf.app.flags.DEFINE_boolean("is_training", False, "is traning.true:tranining,false:testing/inference")
         tf.app.flags.DEFINE_string("model", "text_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
         #tf.app.flags.DEFINE_boolean("is_training_flag", False, "is traning.true:tranining,false:testing/inference")
 
         filter_sizes = [2,3,4,5]#,6,7,8]#[2,3,4,5]#[6, 7, 8, 9, 10]  # [30,40,50] #8
+        #filter_sizes_big= [2,3,4,5]#,6,7,8]#[2,3,4,5]#[6, 7, 8, 9, 10]  # [30,40,50] #8
+
         stride_length = 1
 
         #1.load label dict, restore model from checkpoint
@@ -54,12 +64,26 @@ class Predictor(object):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
 
-        sess=tf.Session(config=config)
-        self.model = HierarchicalAttention(accusation_num_classes, article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes, FLAGS.learning_rate, self.batch_size,FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size, FLAGS.embed_size, FLAGS.hidden_size
-                                 ,num_filters = FLAGS.num_filters, model = FLAGS.model, filter_sizes = filter_sizes, stride_length = stride_length)
-        saver = tf.train.Saver()
-        saver.restore(sess, tf.train.latest_checkpoint(FLAGS.ckpt_dir))
-        self.sess=sess
+        graph = tf.Graph().as_default()
+        with graph:
+            self.model = HierarchicalAttention(accusation_num_classes, article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes, FLAGS.learning_rate, self.batch_size,FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size, FLAGS.embed_size, FLAGS.hidden_size
+                                    ,num_filters = FLAGS.num_filters, model = FLAGS.model, filter_sizes = filter_sizes, stride_length = stride_length)
+            saver = tf.train.Saver()
+            sess = tf.Session(config=config)
+            saver.restore(sess, tf.train.latest_checkpoint(FLAGS.ckpt_dir))
+            self.sess = sess
+
+        graph_big = tf.Graph().as_default()
+        with graph_big:
+            self.model_dpcnn = HierarchicalAttention(accusation_num_classes, article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,
+                                    FLAGS.learning_rate, self.batch_size,FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size,
+                                    FLAGS.embed_size_dpcnn, FLAGS.hidden_size_dpcnn,num_filters = FLAGS.num_filters, model = FLAGS.model_dpcnn, filter_sizes = filter_sizes,
+                                    stride_length = stride_length)
+            saver_big = tf.train.Saver()
+            sess_big = tf.Session(config=config)
+            saver_big.restore(sess_big, tf.train.latest_checkpoint(FLAGS.ckpt_dir_dpcnn))
+            self.sess_big=sess_big
+
         self.FLAGS=FLAGS
 
     def predict_with_model_batch(self,contents):
@@ -70,6 +94,7 @@ class Predictor(object):
 
         """
         model=self.model
+        model_dpcnn=self.model_dpcnn
         input_X=[]
         #1.get fact, 1)tokenize,2)word to index, 3)pad &truncate
         length_contents=len(contents)
@@ -91,26 +116,27 @@ class Predictor(object):
             input_X.append(x)
         #2.feed data and get logit
         feed_dict = {model.input_x: input_X,model.dropout_keep_prob: 1.0,model.is_training_flag:False}
+        feed_dict_big = {model_dpcnn.input_x: input_X,model_dpcnn.dropout_keep_prob: 1.0,model_dpcnn.is_training_flag:False}
+
         logits_accusations,logits_articles,logits_deathpenaltys,logits_lifeimprisonments,logits_imprisonments= self.sess.run([model.logits_accusation,model.logits_article,model.logits_deathpenalty,model.logits_lifeimprisonment,model.logits_imprisonment],feed_dict)
-        #logits_accusation:[batch_size,num_classes]-->logits[0].shape:[num_classes];logits_imprisonment:[batch_size]
+        logits_accusations_big,logits_articles_big,logits_deathpenaltys_big,logits_lifeimprisonments_big,logits_imprisonments_big= self.sess_big.run([model_dpcnn.logits_accusation,model_dpcnn.logits_article,model_dpcnn.logits_deathpenalty,model_dpcnn.logits_lifeimprisonment,model_dpcnn.logits_imprisonment],feed_dict_big)
 
         #3.get label_index
-        #print("=====>logits_accusations.shape:",logits_accusations.shape) # (20, 202)
-        #batch_size=len(contents)
         result_list=[]
         for i in range(length_contents):
-            logits_accusation=logits_accusations[i] #TODO since batch_size=1, we only need to check first element.
+            #add logits
+
+            logits_accusation=logits_accusations[i]+logits_accusations_big[i] #ADD
             accusations_predicted= [j+1 for j in range(len(logits_accusation)) if logits_accusation[j]>=0.5]  #TODO ADD ONE e.g.[2,12,13,10]
             if len(accusations_predicted)<1:
                 accusations_predicted=[np.argmax(logits_accusation)+1] #TODO ADD ONE
-            logits_article=logits_articles[i]
+            logits_article=logits_articles[i]+logits_articles_big[i] #ADD
             articles_predicted= [j+1 for j in range(len(logits_article)) if logits_article[j]>=0.5]  ##TODO ADD ONE e.g.[2,12,13,10]
             if len(articles_predicted)<1:
                 articles_predicted=[np.argmax(logits_article)+1] #TODO ADD ONE
-            deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]) #0 or 1
-            lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]) #0 or 1
-            #print("=====>logits_imprisonments[i]:",logits_imprisonments[i])
-            imprisonment_predicted=int(round(logits_imprisonments[i])) #*imprisonment_std)
+            deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]+logits_deathpenaltys_big[i]) #0 or 1
+            lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]+logits_lifeimprisonments_big[i]) #0 or 1
+            imprisonment_predicted=int(round((logits_imprisonments[i]+logits_imprisonments_big[i])/2.0)) #*imprisonment_std)
             imprisonment=0
             if deathpenalty_predicted==1:
                 imprisonment=-2
