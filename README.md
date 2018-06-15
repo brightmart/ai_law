@@ -178,7 +178,8 @@ find more about task, data or even start smart AI competition by check here:
 
        f1=(2*precision*recall)/(precision+recall). it's value is among:[0,1].
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/f1_micro_macro.jpg)
+<img src="https://github.com/brightmart/ai_law/blob/master/data/f1_micro_macro.jpg"  width="60%" height="60%" />
+
 
        finally we compute:
 
@@ -449,12 +450,12 @@ Notice: offline score is lower than online score for about 4.0.
 
     FC+Softmax
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg)
 
-<img src="https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg"  width="50%" height="50%" />
+<img src="https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg"  width="60%" height="60%" />
 
 
-![alt text](https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG)
+<img src="https://github.com/brightmart/text_classification/blob/master/images/HAN.JPG"  width="60%" height="60%" />
+
 
     check inference_han method from HAN_model.py under directory of predictor
 
@@ -477,10 +478,11 @@ Notice: offline score is lower than online score for about 4.0.
 
     Finally, we will use linear layer to project these features to per-defined labels.
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/text_cnn_multiplelayers.jpg)
+<img src="https://github.com/brightmart/ai_law/blob/master/data/text_cnn_multiplelayers.jpg"  width="60%" height="60%" />
 
 
-![alt text](https://github.com/brightmart/text_classification/blob/master/images/TextCNN.JPG)
+<img src="https://github.com/brightmart/text_classification/blob/master/images/TextCNN.JPG"  width="60%" height="60%" />
+
 
 
     check inference_text_cnn method from HAN_model.py under directory of predictor
@@ -515,9 +517,10 @@ Notice: offline score is lower than online score for about 4.0.
     d. text region embedding: embedding of a region of text convering one or more words.
 
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg)
+<img src="https://github.com/brightmart/ai_law/blob/master/data/DPCNN.jpg"  width="60%" height="60%" />
 
-![alt text](https://github.com/brightmart/ai_law/blob/master/data/deep_pyramid_compare.jpg)
+<img src="https://github.com/brightmart/ai_law/blob/master/data/deep_pyramid_compare.jpg"  width="60%" height="60%" />
+
 
 
 
