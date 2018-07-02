@@ -4,7 +4,7 @@
 #sys.setdefaultencoding('utf-8')
 import tensorflow as tf
 import numpy as np
-from .HAN_model import HierarchicalAttention
+from .model import HierarchicalAttention
 from .data_util_test import token_string_as_list,imprisonment_mean,imprisonment_std,UNK_ID,load_word_vocab,load_label_dict_accu,load_label_dict_article,pad_truncate_list
 
 class Predictor(object):
@@ -110,7 +110,7 @@ class Predictor(object):
             deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]) #0 or 1
             lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]) #0 or 1
             #print("=====>logits_imprisonments[i]:",logits_imprisonments[i])
-            imprisonment_predicted=int(round(logits_imprisonments[i])) #*imprisonment_std)
+            imprisonment_predicted=round(logits_imprisonments[i]) #*imprisonment_std)
             imprisonment=0
             if deathpenalty_predicted==1:
                 imprisonment=-2

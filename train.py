@@ -6,7 +6,7 @@
 #sys.setdefaultencoding('utf8')
 import tensorflow as tf
 import numpy as np
-from predictor.HAN_model import HierarchicalAttention
+from predictor.model import HierarchicalAttention
 from data_util import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data,imprisonment_mean,imprisonment_std
 import os
 from evaluation_matrix import *
@@ -16,14 +16,13 @@ from gensim.models import KeyedVectors
 FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("data_path","./data","path of traning data.")
-tf.app.flags.DEFINE_string("traning_data_file","./data/data_train.json","path of traning data.")
+tf.app.flags.DEFINE_string("traning_data_file","./data_big/cail2018_big.json","path of traning data.") #./data/data_train.json
 tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of validation data.")
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
 tf.app.flags.DEFINE_string("predict_path","./predictor","path of traning data.")
 tf.app.flags.DEFINE_string("ckpt_dir","./predictor/checkpoint/","checkpoint location for the model") #save to here, so make it easy to upload for test
 
-
-tf.app.flags.DEFINE_integer("vocab_size",80000,"maximum vocab size.")
+tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.") #80000
 tf.app.flags.DEFINE_float("learning_rate",0.001,"learning rate")
 tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
@@ -31,7 +30,7 @@ tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
-tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #64
+tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #64
 tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
 tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
 
@@ -39,13 +38,13 @@ tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,
 tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") #data_big/law_fasttext_model100.bin-->
+tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
-tf.app.flags.DEFINE_string("name_scope","cnn","name scope value.")
+#tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
+tf.app.flags.DEFINE_string("model","dp_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling") #text_cnn
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
 filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
@@ -53,7 +52,8 @@ filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
 stride_length=1
 def main(_):
     print("model:",FLAGS.model)
-    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
+    name_scope=FLAGS.model
+    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode)
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}
     vocab_size = len(vocab_word2index);print("cnn_model.vocab_size:",vocab_size);
@@ -61,7 +61,7 @@ def main(_):
     deathpenalty_num_classes=len(deathpenalty_label2index);lifeimprisonment_num_classes=len(lifeimprisonment_label2index)
     print("accusation_num_classes:",accusation_num_classes);print("article_num_clasess:",article_num_classes)
     train,valid, test= load_data_multilabel(FLAGS.traning_data_file,FLAGS.valid_data_file,FLAGS.test_data_path,vocab_word2index, accusation_label2index,articles_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                                      FLAGS.sentence_len,name_scope=FLAGS.name_scope,test_mode=FLAGS.test_mode)
+                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode)
     train_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
     test_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
@@ -226,7 +226,11 @@ def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classe
 def assign_pretrained_word_embedding(sess,vocabulary_index2word,vocab_size,model,word2vec_model_path,embedding_instance):
     print("using pre-trained word emebedding.started.word2vec_model_path:",word2vec_model_path)
     ##word2vec_model = word2vec.load(word2vec_model_path, kind='bin')
-    word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=True, unicode_errors='ignore')  #
+    binary_flag = True
+    if '.bin' not in word2vec_model_path:
+        binary_flag = False
+    word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=binary_flag,unicode_errors='ignore')
+    #word2vec_model = KeyedVectors.load_word2vec_format(word2vec_model_path, binary=True, unicode_errors='ignore')  #
     word2vec_dict = {}
     count_=0
     for word, vector in zip(word2vec_model.vocab, word2vec_model.vectors):

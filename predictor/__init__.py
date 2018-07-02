@@ -1,1 +1,1 @@
-from .predictor import Predictor
+from .predictor_ensemble import Predictor

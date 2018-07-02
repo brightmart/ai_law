@@ -9,7 +9,7 @@ class HierarchicalAttention:
     def __init__(self,  accusation_num_classes,article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,learning_rate,
                         batch_size, decay_steps, decay_rate, sequence_length, num_sentences,vocab_size, embed_size,hidden_size,
                         initializer=tf.random_normal_initializer(stddev=0.1),clip_gradients=1.0,max_pooling_style='max_pooling',
-                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=16,num_repeat=4):#0.01
+                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=32,num_repeat=4):#0.01
         """init all hyperparameter here"""
         # set hyperparamter
         self.accusation_num_classes = accusation_num_classes
@@ -388,20 +388,39 @@ class HierarchicalAttention:
         pass
 
     def project_tasks(self,h):
-        # 7. transoform each sub task using one-layer MLP ,then get logits
+        """
+        :param h: shared features
+        :return: logits
+        transoform each sub task using one-layer MLP ,then get logits.
+        get some insights from densely connected layers from recently development
+        """
+        #1.accusation: FC-->dropout-->classifier
         h_accusation = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        h_accusation = tf.nn.dropout(h_accusation,keep_prob=0.5) # TODO ADD 2018.07.02
         logits_accusation = tf.layers.dense(h_accusation, self.accusation_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
-        h_article = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #2.relevant article: concated features-->FC-->dropout-->classifier
+        h_article_concated=tf.concat([h,h_accusation],axis=-1) #TODO [batch,?,hidden_size*2] ADD 2018.07.02
+        h_article = tf.layers.dense(h_article_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        h_article = tf.nn.dropout(h_article,keep_prob=0.5) # TODO ADD 2018.07.02
         logits_article = tf.layers.dense(h_article, self.article_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
-        h_deathpenalty = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #3.death penalty: concated features-->FC-->dropout-->classifier
+        h_deathpenalty_concated=tf.concat([h,h_accusation,h_article],axis=-1)  #TODO [batch,?,hidden_size*3] ADD 2018.07.02
+        h_deathpenalty = tf.layers.dense(h_deathpenalty_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        h_deathpenalty = tf.nn.dropout(h_deathpenalty,keep_prob=0.5) # TODO ADD 2018.07.02
         logits_deathpenalty = tf.layers.dense(h_deathpenalty,self.deathpenalty_num_classes,use_bias=True)  # shape:[None,self.num_classes] #
 
-        h_lifeimprisonment = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #4.life imprisonment: concated features-->FC-->dropout-->classifier
+        h_lifeimprsion_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty],axis=-1)
+        h_lifeimprisonment = tf.layers.dense(h_lifeimprsion_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        h_lifeimprisonment = tf.nn.dropout(h_lifeimprisonment,keep_prob=0.5) # TODO ADD 2018.07.02
         logits_lifeimprisonment = tf.layers.dense(h_lifeimprisonment, self.lifeimprisonment_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
-        logits_imprisonment = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #5.imprisonment: concated features-->FC-->dropout-->classifier
+        h_imprisonment_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty,h_lifeimprisonment],axis=-1)
+        logits_imprisonment = tf.layers.dense(h_imprisonment_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        logits_imprisonment = tf.nn.dropout(logits_imprisonment,keep_prob=0.5) # TODO ADD 2018.07.02
         logits_imprisonment = tf.layers.dense(logits_imprisonment, 1,use_bias=True)  # imprisonment is a continuous value, no need to use activation function
         logits_imprisonment = tf.reshape(logits_imprisonment, [-1]) #[batch_size]
         return logits_accusation, logits_article, logits_deathpenalty, logits_lifeimprisonment, logits_imprisonment
