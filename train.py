@@ -30,7 +30,7 @@ tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
-tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #64
+tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
 tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
 tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
 
@@ -38,7 +38,7 @@ tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,
 tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
+tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")

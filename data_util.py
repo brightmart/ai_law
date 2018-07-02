@@ -61,8 +61,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     # 4. save to file system if vocabulary of words not exists
     if not os.path.exists(cache_file):
         with open(cache_file, 'ab') as data_f:
-            print("going to dump train/valid/test data to file sytem.")
-            pickle.dump((train,valid,test),data_f)
+            print("going to dump train/valid/test data to file sytem.FAKE SAVE!")
+            #pickle.dump((train,valid,test),data_f) #TEMP REMOVED.
     return train,valid,test
 
 splitter=':'
