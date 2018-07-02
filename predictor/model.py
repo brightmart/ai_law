@@ -396,31 +396,31 @@ class HierarchicalAttention:
         """
         #1.accusation: FC-->dropout-->classifier
         h_accusation = tf.layers.dense(h, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_accusation = tf.nn.dropout(h_accusation,keep_prob=0.5) # TODO ADD 2018.07.02
+        h_accusation = tf.nn.dropout(h_accusation,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_accusation = tf.layers.dense(h_accusation, self.accusation_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
         #2.relevant article: concated features-->FC-->dropout-->classifier
         h_article_concated=tf.concat([h,h_accusation],axis=-1) #TODO [batch,?,hidden_size*2] ADD 2018.07.02
         h_article = tf.layers.dense(h_article_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_article = tf.nn.dropout(h_article,keep_prob=0.5) # TODO ADD 2018.07.02
+        h_article = tf.nn.dropout(h_article,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_article = tf.layers.dense(h_article, self.article_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
         #3.death penalty: concated features-->FC-->dropout-->classifier
         h_deathpenalty_concated=tf.concat([h,h_accusation,h_article],axis=-1)  #TODO [batch,?,hidden_size*3] ADD 2018.07.02
         h_deathpenalty = tf.layers.dense(h_deathpenalty_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_deathpenalty = tf.nn.dropout(h_deathpenalty,keep_prob=0.5) # TODO ADD 2018.07.02
+        h_deathpenalty = tf.nn.dropout(h_deathpenalty,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_deathpenalty = tf.layers.dense(h_deathpenalty,self.deathpenalty_num_classes,use_bias=True)  # shape:[None,self.num_classes] #
 
         #4.life imprisonment: concated features-->FC-->dropout-->classifier
         h_lifeimprsion_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty],axis=-1)
         h_lifeimprisonment = tf.layers.dense(h_lifeimprsion_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_lifeimprisonment = tf.nn.dropout(h_lifeimprisonment,keep_prob=0.5) # TODO ADD 2018.07.02
+        h_lifeimprisonment = tf.nn.dropout(h_lifeimprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_lifeimprisonment = tf.layers.dense(h_lifeimprisonment, self.lifeimprisonment_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
         #5.imprisonment: concated features-->FC-->dropout-->classifier
         h_imprisonment_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty,h_lifeimprisonment],axis=-1)
         logits_imprisonment = tf.layers.dense(h_imprisonment_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        logits_imprisonment = tf.nn.dropout(logits_imprisonment,keep_prob=0.5) # TODO ADD 2018.07.02
+        logits_imprisonment = tf.nn.dropout(logits_imprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_imprisonment = tf.layers.dense(logits_imprisonment, 1,use_bias=True)  # imprisonment is a continuous value, no need to use activation function
         logits_imprisonment = tf.reshape(logits_imprisonment, [-1]) #[batch_size]
         return logits_accusation, logits_article, logits_deathpenalty, logits_lifeimprisonment, logits_imprisonment
