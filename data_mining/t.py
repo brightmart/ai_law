@@ -16,7 +16,7 @@ def highway(input_, size, num_layers=1, bias=-2.0, scope='Highway'):
             output = t * g + (1. - t) * input_
             input_ = output
 
-return output
+    return output
 
 
 

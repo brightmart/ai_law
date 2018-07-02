@@ -4,7 +4,7 @@
 #sys.setdefaultencoding('utf-8')
 import tensorflow as tf
 import numpy as np
-from .model import HierarchicalAttention
+from .HAN_model import HierarchicalAttention
 from .data_util_test import token_string_as_list,imprisonment_mean,imprisonment_std,UNK_ID,load_word_vocab,load_label_dict_accu,load_label_dict_article,pad_truncate_list
 
 class Predictor(object):
@@ -26,8 +26,8 @@ class Predictor(object):
         tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
         tf.app.flags.DEFINE_integer("sentence_len", 400, "max sentence length")
         tf.app.flags.DEFINE_integer("num_sentences", 16, "number of sentences")
-        tf.app.flags.DEFINE_integer("embed_size", 256, "embedding size") #64
-        tf.app.flags.DEFINE_integer("hidden_size", 256, "hidden size")  #128
+        tf.app.flags.DEFINE_integer("embed_size", 300, "embedding size") #64
+        tf.app.flags.DEFINE_integer("hidden_size", 128, "hidden size")  #128
         tf.app.flags.DEFINE_integer("num_filters", 256, "number of filter for a filter map used in CNN.") #128
         tf.app.flags.DEFINE_boolean("is_training", False, "is traning.true:tranining,false:testing/inference")
         tf.app.flags.DEFINE_string("model", "text_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
@@ -110,7 +110,7 @@ class Predictor(object):
             deathpenalty_predicted=np.argmax(logits_deathpenaltys[i]) #0 or 1
             lifeimprisonment_predicted=np.argmax(logits_lifeimprisonments[i]) #0 or 1
             #print("=====>logits_imprisonments[i]:",logits_imprisonments[i])
-            imprisonment_predicted=round(logits_imprisonments[i]) #*imprisonment_std)
+            imprisonment_predicted=int(round(logits_imprisonments[i])) #*imprisonment_std)
             imprisonment=0
             if deathpenalty_predicted==1:
                 imprisonment=-2

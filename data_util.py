@@ -21,7 +21,7 @@ imprisonment_mean=26.2
 imprisonment_std=33.5
 from predictor.data_util_test import  pad_truncate_list
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False):
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=10000,test_number=3000):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -38,23 +38,24 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
             return pickle.load(data_f)
     # 2. read source file
     train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
-    valid_file_object = codecs.open(valid_data_path, mode='r', encoding='utf-8')
-    test_data_obejct = codecs.open(test_data_path, mode='r', encoding='utf-8')
-    train_lines = train_file_object.readlines()
-    valid_lines=valid_file_object.readlines()
-    test_lines=test_data_obejct.readlines()
+    #valid_file_object = codecs.open(valid_data_path, mode='r', encoding='utf-8')
+    #test_data_obejct = codecs.open(test_data_path, mode='r', encoding='utf-8')
+    train_lines_original = train_file_object.readlines()
+    random.shuffle(train_lines_original)
 
-    train_lines.extend(test_lines)
-
-    random.shuffle(train_lines)
-    random.shuffle(valid_lines)
-    random.shuffle(test_lines)
+    number_examples=len(train_lines_original)
+    valid_start=number_examples-(valid_number+test_number)
+    train_lines=train_lines_original[0:valid_start]
+    valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
+    test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
 
     if test_mode:
         train_lines=train_lines[0:1000]
     # 3. transform to train/valid data to standardized format
     train=transform_data_to_index(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
+
     valid=transform_data_to_index(valid_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
+
     test=transform_data_to_index(test_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
 
     # 4. save to file system if vocabulary of words not exists
@@ -118,7 +119,7 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
         death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty
         death_penalty = deathpenalty_label2index[death_penalty]
         y_deathpenalty = transform_multilabel_as_multihot(death_penalty, 2)
-        Y_deathpenalty.append(y_deathpenalty)
+        #Y_deathpenalty.append(y_deathpenalty) #TODO REMOVE 2018.07.02
 
         # 5.transform life imprisonment.discrete
         life_imprisonment = json_string['meta']['term_of_imprisonment']['life_imprisonment']
@@ -137,7 +138,7 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
             freq_article = article_freq_dict[article_list[0]]
             if freq_accusation <= num_mini_examples or freq_article <= num_mini_examples:
                 freq=(freq_accusation+freq_article)/2
-                num_copy=max(1,num_mini_examples/freq)
+                num_copy=int(max(1,num_mini_examples/freq))
                 if i%1000==0: print("####################freq_accusation:",freq_accusation,"freq_article:",freq_article,";num_copy:",num_copy)
             weight_accusation, weight_artilce=get_weight_freq_article(freq_accusation, freq_article)
 
@@ -145,7 +146,7 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
             X.append(x)
             Y_accusation.append(y_accusation)
             Y_article.append(y_article)
-            Y_deathpenalty.append(y_deathpenalty)
+            Y_deathpenalty.append(y_deathpenalty) #TODO
             Y_lifeimprisonment.append(y_lifeimprisonment)
             Y_imprisonment.append(float(imprisonment))
             weights_accusation.append(weight_accusation)
@@ -230,7 +231,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
         lines=file_object.readlines()
         random.shuffle(lines)
         if test_mode:
-           lines=lines[0:10000]
+           lines=lines[0:50000]
         #2.loop each line,put to counter
         c_inputs=Counter()
         c_accusation_labels=Counter()
