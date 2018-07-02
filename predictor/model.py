@@ -890,11 +890,12 @@ class HierarchicalAttention:
         # let `x = logits`, `z = labels`.  The logistic loss is:z * -log(sigmoid(x)) + (1 - z) * -log(1 - sigmoid(x))
 
         #loss1: accusation
+        #input_y_accusation_onehot=tf.one_hot(self.input_y_accusation,self.accusation_num_classes)
         losses_accusation= tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_accusation,logits=self.logits_accusation)  #[batch_size,num_classes]
         self.loss_accusation = tf.reduce_mean((tf.reduce_sum(losses_accusation,axis=1)))  # shape=(?,)-->(). loss for all data in the batch-->single loss
 
         #loss2:relevant article
-
+        #input_y_article_onehot=tf.one_hot(self.input_y_article,self.article_num_classes)
         losses_article= tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_article,logits=self.logits_article)  # [batch_size,num_classes]
         self.loss_article = tf.reduce_mean((tf.reduce_sum(losses_article, axis=1)))  # shape=(?,)-->(). loss for all data in the batch-->single loss
 

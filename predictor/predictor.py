@@ -4,7 +4,7 @@
 #sys.setdefaultencoding('utf-8')
 import tensorflow as tf
 import numpy as np
-from .HAN_model import HierarchicalAttention
+from .model import HierarchicalAttention
 from .data_util_test import token_string_as_list,imprisonment_mean,imprisonment_std,UNK_ID,load_word_vocab,load_label_dict_accu,load_label_dict_article,pad_truncate_list
 
 class Predictor(object):
@@ -12,7 +12,7 @@ class Predictor(object):
         """
         init method required. set batch_size, and load some resources.
         """
-        self.batch_size =1024
+        self.batch_size =512 #1024
 
 
         FLAGS = tf.app.flags.FLAGS

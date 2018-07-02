@@ -108,12 +108,12 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
         # 2. transform accusation.discrete
         accusation_list = json_string['meta']['accusation']
         accusation_list = [accusation_label2index[label] for label in accusation_list]
-        y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size)
+        y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size) #TODO TODO TODO from one hot to dense
 
         # 3.transform relevant article.discrete
         article_list = json_string['meta']['relevant_articles']
         article_list = [article_label2index[int(label)] for label in article_list] #label-->int(label) #2018-06-13
-        y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
+        y_article = transform_multilabel_as_multihot(article_list, article_lable_size) #TODO TODO TODO from one hot to dense
 
         # 4.transform death penalty.discrete
         death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty
