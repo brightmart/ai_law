@@ -6,8 +6,6 @@ import codecs
 import random
 import numpy as np
 from tflearn.data_utils import pad_sequences
-import multiprocessing
-
 from collections import Counter
 import os
 #import pickle
@@ -23,27 +21,8 @@ _UNK="UNK"
 imprisonment_mean=26.2
 imprisonment_std=33.5
 from predictor.data_util_test import  pad_truncate_list
-
-def build_chunk(lines, chunk_num=10):
-    """
-    split list into sub lists:分块
-    :param lines: total thing
-    :param chunk_num: num of chunks
-    :return: return chunks but the last chunk may not be equal to chunk_size
-    """
-    total = len(lines)
-    chunk_size = float(total) / float(chunk_num + 1)
-    chunks = []
-    for i in range(chunk_num + 1):
-        if i == chunk_num:
-            chunks.append(lines[int(i * chunk_size):])
-        else:
-            chunks.append(lines[int(i * chunk_size):int((i + 1) * chunk_size)])
-    return chunks
-
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=10000,
-                         test_number=3000,process_num=10):
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=10000,test_number=3000):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -65,65 +44,32 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     train_lines_original = train_file_object.readlines()
     random.shuffle(train_lines_original)
 
-
     number_examples=len(train_lines_original)
     valid_start=number_examples-(valid_number+test_number)
+    train_lines=train_lines_original[0:valid_start]
+    valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
+    test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
+
     if test_mode:
-        train_lines=train_lines_original[0:1000*100] #1000
-    else:
-        train_lines=train_lines_original[0:valid_start]
-    #valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
-    #test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
+        train_lines=train_lines[0:1000]
+    # 3. transform to train/valid data to standardized format
+    train=transform_data_to_index(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
 
-    # 3. transform to train/valid data to standardized format #TODO change to multi-processing version for train
-    ##############below is for multi-processing########################################################################################################
-    # 3.1 get chunks as list.
-    chunks = build_chunk(train_lines, chunk_num=process_num - 1)
-    pool = multiprocessing.Pool(processes=process_num)
-    # 3.2 use multiprocessing to handle different chunk. each chunk will be transformed and save to file system.
-    for chunk_id, each_chunk in enumerate(chunks):
-        file_name=cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik" #cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
-        print("start multi-processing:",chunk_id,file_name)
-        pool.apply_async(transform_data_to_index_fn,
-                         args=(each_chunk, file_name, vocab_word2index, accusation_label2index,
-                               article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,
-                               sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
-    pool.close()
-    pool.join()
-    print("finish reduce stage...")
+    valid=transform_data_to_index(valid_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
 
-    # 3.3 merge sub file to final file.
-    X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article=[],[],[],[],[],[],[],[]
-    for chunk_id in range(process_num):
-        file_name =cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
-        with open(file_name, 'rb') as data_f:
-            X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_, weights_accusation_, weights_article_=pickle.load(data_f)
-            X.extend(X_);Y_accusation.extend(Y_accusation_);Y_article.extend(Y_article_);Y_deathpenalty.extend(Y_deathpenalty_);Y_lifeimprisonment.extend(Y_lifeimprisonment_)
-            Y_imprisonment.extend(Y_imprisonment_);weights_accusation.extend(weights_accusation_);weights_article.extend(weights_article_)
-            #command = 'rm ' + file_name
-            #os.system(command)
-    ##############above is for multi-processing##########################################################################################################
-
-    #train=transform_data_to_ind
-    # ex(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
-    #valid=transform_data_to_index(valid_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
-    #test=transform_data_to_index(test_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
+    test=transform_data_to_index(test_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
 
     # 4. save to file system if vocabulary of words not exists
-    #if not os.path.exists(cache_file):
-    #    with open(cache_file, 'ab') as data_f:
-    #        print("going to dump train/valid/test data to file sytem!")
-    #        pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
-    train= X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
-    iii=0
-    iii/0
-    return train #,valid,test
+    if not os.path.exists(cache_file):
+        with open(cache_file, 'ab') as data_f:
+            print("going to dump train/valid/test data to file sytem!")
+            pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+    return train,valid,test
 
 splitter=':'
 num_mini_examples=1900
 
-
-def transform_data_to_index_fn(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
+def transform_data_to_index(lines,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
                             sentence_len,data_type,name_scope):#reverse_flag=False
     """
     transform data to index using vocab and label dict.
@@ -136,7 +82,6 @@ def transform_data_to_index_fn(lines,target_file_path,vocab_word2index,accusatio
     :param sentence_len: max sentence length
     :return:
     """
-    print("transform_data_to_index.####################.start.")
     X = []
     Y_accusation = []  # discrete
     Y_article = []  # discrete
@@ -152,7 +97,7 @@ def transform_data_to_index_fn(lines,target_file_path,vocab_word2index,accusatio
     accusation_freq_dict, article_freq_dict = load_accusation_articles_freq_dict(accusation_label2index,article_label2index, name_scope)
 
     for i, line in enumerate(lines):
-        if i%10000==0:print(data_type,"i:", i)
+        if i%10000==0:print("i:", i)
         json_string = json.loads(line.strip())
 
         # 1. transform input x.discrete
@@ -233,13 +178,7 @@ def transform_data_to_index_fn(lines,target_file_path,vocab_word2index,accusatio
     X_=np.array(X_)
 
     data = (X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_,weights_accusation_,weights_article_)
-
-    #dump to target file. target_file_path  #TODO add 2018.07.03
-    with open(target_file_path, 'rb') as target_file:
-        print(data_type,"####################going to dump file:",target_file_path)
-        pickle.dump(data, target_file,protocol=pickle.HIGHEST_PROTOCOL)
-    print(data_type,"#########################finished.transform_data_to_index")
-    #return data
+    return data
 
 def transform_multilabel_as_multihot(label_list,label_size):
     """

@@ -396,23 +396,24 @@ Notice: offline score is lower than online score for about 4.0.
    
    1) basic, we use joint model to solve these three task together in a single model where we sharing a common features extracted from 
    
-   fact of law case. the feature used for a task can also be used for other tasks. and we want to let the model to learn a 
+     fact of law case. the feature used for a task can also be used for other tasks. and we want to let the model to learn a 
    
-   sharing feature so well that all three tasks can be benefited from it.
+     sharing feature so well that all three tasks can be benefited from it.
    
    2) secondly, as these tasks are dependent between each other in some extent, and get some idea from densely connected models 
    
-   from recently development, we design our model as follow:
+     from recently development, we design our model as follow:
      
+   
    let common shared feature h , accusation feature as h_accu, relevant law feature as h_law, and punishement feature as h_puni.
    
-   a. we will pass accusation feature h_acc together with original common shared feature h as a new feature to compute 
+     a. we will pass accusation feature h_acc together with original common shared feature h as a new feature to compute 
    
-   relevant law feature as h_law.
+     relevant law feature as h_law.
    
-   b.we will also pass accusation feature h_acc,original common shared feature h, toegether with relevant law feature h_law
+     b.we will also pass accusation feature h_acc,original common shared feature h, toegether with relevant law feature h_law
    
-   to compute punishment feature.
+     to compute punishment feature.
    
    we are doing this, so that the decision we made about accusation, will also affect the decision of predict
    
