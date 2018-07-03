@@ -43,7 +43,7 @@ def build_chunk(lines, chunk_num=10):
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
                          deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=10000,
-                         test_number=3000,process_num=20):
+                         test_number=3000,process_num=30):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:

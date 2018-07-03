@@ -454,9 +454,9 @@ Notice: offline score is lower than online score for about 4.0.
 
 10.Environment
 -------------------------------------------------------------------------
-   python 3 + tensorflow 1.8
+   python 2 + tensorflow 1.8
 
-   for people use python2, you can just add below lines:
+   for people use python3, you can just remove below lines:
 
       import sys
 

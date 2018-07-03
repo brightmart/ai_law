@@ -73,7 +73,7 @@ def load_word_vocab(file_path):
     :param file_path:
     :return: a dict, named:vocab_word2index
     """
-    file_object=open(file_path,mode='r',encoding='utf8')
+    file_object=open(file_path,mode='r') #TODO add encoding='utf8' for version python3
     lines=file_object.readlines()
     vocab_word2index={}
     vocab_word2index[_PAD] = PAD_ID
@@ -93,7 +93,7 @@ def load_label_dict_accu(file_path):
      :param file_path:
      :return: a dict, named:label2index_dict
      """
-    file_object = open(file_path, mode='r', encoding='utf8')
+    file_object = open(file_path, mode='r') #TODO add  encoding='utf8' for version python3
     lines = file_object.readlines()
     label2index_dict = {}
     for i, label in enumerate(lines):
@@ -107,7 +107,7 @@ def load_label_dict_article(file_path):
      :param file_path:
      :return: a dict, named:label2index_dict
      """
-    file_object = open(file_path, mode='r', encoding='utf8')
+    file_object = open(file_path, mode='r') #TODO add  encoding='utf8' for version python3
     lines = file_object.readlines()
     label2index_dict = {}
     for i, label in enumerate(lines):
