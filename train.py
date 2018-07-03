@@ -24,10 +24,10 @@ tf.app.flags.DEFINE_string("ckpt_dir","./predictor/checkpoint/","checkpoint loca
 
 tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.") #80000
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate") #0.001
-tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size for training/evaluating.") #批处理的大小 32-->128
+tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
-tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
+tf.app.flags.DEFINE_float("keep_dropout_rate", 0.8, "percentage to keep when using dropout.") #0.65一次衰减多少
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
 tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
