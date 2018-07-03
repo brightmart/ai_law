@@ -9,6 +9,7 @@ from tflearn.data_utils import pad_sequences
 from collections import Counter
 import os
 import pickle
+#import cPickle as pickle
 import json
 import jieba
 
@@ -61,8 +62,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     # 4. save to file system if vocabulary of words not exists
     if not os.path.exists(cache_file):
         with open(cache_file, 'ab') as data_f:
-            print("going to dump train/valid/test data to file sytem.FAKE SAVE!")
-            #pickle.dump((train,valid,test),data_f) #TEMP REMOVED.
+            print("going to dump train/valid/test data to file sytem!")
+            pickle.dump((train,valid,test),data_f) #TEMP REMOVED. ,protocol=2
     return train,valid,test
 
 splitter=':'
@@ -108,12 +109,13 @@ def transform_data_to_index(lines,vocab_word2index,accusation_label2index,articl
         # 2. transform accusation.discrete
         accusation_list = json_string['meta']['accusation']
         accusation_list = [accusation_label2index[label] for label in accusation_list]
-        y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size) #TODO TODO TODO from one hot to dense
+        #print(i,"accusation_list",accusation_list)
+        y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size)
 
         # 3.transform relevant article.discrete
         article_list = json_string['meta']['relevant_articles']
         article_list = [article_label2index[int(label)] for label in article_list] #label-->int(label) #2018-06-13
-        y_article = transform_multilabel_as_multihot(article_list, article_lable_size) #TODO TODO TODO from one hot to dense
+        y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
 
         # 4.transform death penalty.discrete
         death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty

@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_string("predict_path","./predictor","path of traning data.")
 tf.app.flags.DEFINE_string("ckpt_dir","./predictor/checkpoint/","checkpoint location for the model") #save to here, so make it easy to upload for test
 
 tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.") #80000
-tf.app.flags.DEFINE_float("learning_rate",0.001,"learning rate")
+tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate") #0.001
 tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
@@ -68,9 +68,9 @@ def main(_):
     #print some message for debug purpose
     print("length of training data:",len(train_X),";valid data:",len(valid_X),";test data:",len(test_X))
     print("trainX_[0]:", train_X[0]);
-    train_Y_accusation_short = get_target_label_short(train_Y_accusation[0])
+    train_Y_accusation_short1 = get_target_label_short(train_Y_accusation[0]);train_Y_accusation_short2 = get_target_label_short(train_Y_accusation[1]);train_Y_accusation_short3 = get_target_label_short(train_Y_accusation[2]);train_Y_accusation_short4 = get_target_label_short(train_Y_accusation[20]);train_Y_accusation_short5 = get_target_label_short(train_Y_accusation[200])
     train_Y_article_short = get_target_label_short(train_Y_article[0])
-    print("train_Y_accusation_short:", train_Y_accusation_short,";train_Y_article_short:",train_Y_article_short)
+    print("train_Y_accusation_short:", train_Y_accusation_short1,train_Y_accusation_short2,train_Y_accusation_short3,train_Y_accusation_short4,train_Y_accusation_short4,";train_Y_article_short:",train_Y_article_short)
     print("train_Y_deathpenalty:",train_Y_deathpenalty[0],";train_Y_lifeimprisonment:",train_Y_lifeimprisonment[0],";train_Y_imprisonment:",train_Y_imprisonment[0])
     #2.create session.
     config=tf.ConfigProto()
@@ -169,7 +169,9 @@ def main(_):
                     saver.save(sess,save_path,global_step=epoch)
                     accasation_score_best = accasation_score
             #if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
-            if (epoch == 1 or epoch == 3 or epoch == 6 or epoch == 9 or epoch == 12 or epoch == 18):
+            #if (epoch == 1 or epoch == 3 or epoch == 6 or epoch == 9 or epoch == 12 or epoch == 18):
+            if (epoch == 0 or epoch == 2 or epoch == 4 or epoch == 7 or epoch == 9 or epoch == 13):
+
                 for i in range(2):
                     print(i, "Going to decay learning rate by half.")
                     sess.run(model.learning_rate_decay_half_op)
