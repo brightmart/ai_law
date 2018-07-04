@@ -85,7 +85,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         file_namee=cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik" #cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
         print("start multi-processing:",chunk_id,file_namee)
         # apply_async
-        pool.apply(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
+        pool.apply_async(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
     pool.close()
     pool.join()
     print("finish reduce stage...")
