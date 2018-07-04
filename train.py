@@ -31,8 +31,8 @@ tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when usi
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
 tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #300-->64
-tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
-tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
+tf.app.flags.DEFINE_integer("hidden_size",512,"hidden size") #128
+tf.app.flags.DEFINE_integer("num_filters",512,"number of filter for a filter map used in CNN.") #128
 
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
@@ -44,7 +44,7 @@ tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dyn
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","dp_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
+tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
 filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
