@@ -42,7 +42,7 @@ def build_chunk(lines, chunk_num=10):
     return chunks
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=10000,
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=12000,
                          test_number=3000,process_num=30):
     """
     convert data as indexes using word2index dicts.
@@ -73,6 +73,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
     test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
 
+    print("length of train_lines:",len(train_lines),";length of valid_lines:",len(valid_lines),";length of test_lines:",len(test_lines))
+
     # 3. transform to train/valid data to standardized format #TODO change to multi-processing version for train
     ##############below is for multi-processing########################################################################################################
     # 3.1 get chunks as list.
@@ -82,10 +84,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     for chunk_id, each_chunk in enumerate(chunks):
         file_namee=cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik" #cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
         print("start multi-processing:",chunk_id,file_namee)
-        pool.apply_async(transform_data_to_index,
-                         args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,
-                               article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,
-                               sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
+        # apply_async
+        pool.apply(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
     pool.close()
     pool.join()
     print("finish reduce stage...")
@@ -94,7 +94,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article=[],[],[],[],[],[],[],[]
     for chunk_id in range(process_num):
         file_name =cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
-        with open(file_name, 'rb') as data_f:
+        with open(file_name, 'rb') as data_f:#rb
             X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_, weights_accusation_, weights_article_=pickle.load(data_f)
             X.extend(X_);Y_accusation.extend(Y_accusation_);Y_article.extend(Y_article_);Y_deathpenalty.extend(Y_deathpenalty_);Y_lifeimprisonment.extend(Y_lifeimprisonment_)
             Y_imprisonment.extend(Y_imprisonment_);weights_accusation.extend(weights_accusation_);weights_article.extend(weights_article_)
@@ -133,7 +133,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
     :param sentence_len: max sentence length
     :return:
     """
-    print("transform_data_to_index.####################.start.")
+    print(data_type,"transform_data_to_index.####################.start.")
     X = []
     Y_accusation = []  # discrete
     Y_article = []  # discrete
@@ -156,17 +156,24 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         facts = json_string['fact']
         input_list = token_string_as_list(facts)  # tokenize
         x = [vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
+        if i % 100000 == 0:print(i,"#######transform_data_to_index.x:",x)
         x=pad_truncate_list(x, sentence_len) #ADD 2018.05.24
 
         # 2. transform accusation.discrete
         accusation_list = json_string['meta']['accusation']
-        accusation_list = [accusation_label2index[label] for label in accusation_list]
+        if i % 50000 == 0:print(i,"#######transform_data_to_index.accusation_list(string):",accusation_list)
+        accusation_list = [accusation_label2index[label] for label in accusation_list] #TODO add 2018.07.04
+        if i % 50000 == 0:print(i,"#######transform_data_to_index.accusation_list(index):",accusation_list)
+
         #print(i,"accusation_list",accusation_list)
         y_accusation = transform_multilabel_as_multihot(accusation_list, accusation_label_size)
 
         # 3.transform relevant article.discrete
         article_list = json_string['meta']['relevant_articles']
+        if i % 50000 == 0:print(i,"#######transform_data_to_index.article_list(string):",article_list)
         article_list = [article_label2index[int(label)] for label in article_list] #label-->int(label) #2018-06-13
+        if i % 50000 == 0:print(i,"#######transform_data_to_index.article_list(index):",article_list)
+
         y_article = transform_multilabel_as_multihot(article_list, article_lable_size)
 
         # 4.transform death penalty.discrete
@@ -230,11 +237,10 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
     X_=np.array(X_)
 
     data = (X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_,weights_accusation_,weights_article_)
-
     #dump to target file if and only if it is training data.
     print(data_type,"#########################finished.transform_data_to_index")
-    if data_type == 'train'  :
-        with open(target_file_path, 'ab') as target_file:
+    if data_type == 'train':
+        with open(target_file_path, 'ab') as target_file:# 'ab'
             print(data_type,"####################going to dump file:",target_file_path)
             pickle.dump(data, target_file,protocol=pickle.HIGHEST_PROTOCOL)
     else:
@@ -303,6 +309,9 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
             json_string = json.loads(line.strip())
             facts = json_string['fact']
             input_list = token_string_as_list(facts)
+            if i % 10000 == 0:
+                print("create_or_load_vocabulary:")
+                print(input_list)
             c_inputs.update(input_list)
 
             accusation_list = json_string['meta']['accusation']
@@ -368,7 +377,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
     return vocab_word2index, accusation_label2index,articles_label2index
 
 def token_string_as_list(string,tokenize_style='word'):
-    #string=string.decode("utf-8")
+    #string=string.decode("utf-8") #ADD TODO add this for python 2.7
     string=replace_money_value(string)  #TODO add normalize number ADD 2018.06.11
     length=len(string)
     if tokenize_style=='char':

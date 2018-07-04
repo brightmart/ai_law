@@ -12,7 +12,7 @@ class Predictor(object):
         """
         init method required. set batch_size, and load some resources.
         """
-        self.batch_size =1024 #512
+        self.batch_size =2048#1024 #512
 
 
         FLAGS = tf.app.flags.FLAGS
@@ -40,7 +40,9 @@ class Predictor(object):
         # 1.load label dict
         self.vocab_word2index=load_word_vocab(FLAGS.vocab_word_path)
         accusation_label2index=load_label_dict_accu(FLAGS.accusation_label_path)
+        print("accusation_label2index:",accusation_label2index)
         articles_label2index=load_label_dict_article(FLAGS.article_label_path)
+        print("articles_label2index:",articles_label2index)
 
         deathpenalty_label2index = {True: 1, False: 0}
         lifeimprisonment_label2index = {True: 1, False: 0}
@@ -99,7 +101,7 @@ class Predictor(object):
         #batch_size=len(contents)
         result_list=[]
         for i in range(length_contents):
-            logits_accusation=logits_accusations[i] #TODO since batch_size=1, we only need to check first element.
+            logits_accusation=logits_accusations[i]
             accusations_predicted= [j+1 for j in range(len(logits_accusation)) if logits_accusation[j]>=0.5]  #TODO ADD ONE e.g.[2,12,13,10]
             if len(accusations_predicted)<1:
                 accusations_predicted=[np.argmax(logits_accusation)+1] #TODO ADD ONE

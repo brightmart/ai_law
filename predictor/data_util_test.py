@@ -79,7 +79,7 @@ def load_word_vocab(file_path):
     vocab_word2index[_PAD] = PAD_ID
     vocab_word2index[_UNK] = UNK_ID
     for i,line in enumerate(lines):
-        line=line.strip() #.decode("utf-8")
+        line=line.decode("utf-8").strip() #TODO add .decode("utf-8") for python 2.7
         if "::" in line:
             word=":"
         else:
@@ -93,11 +93,11 @@ def load_label_dict_accu(file_path):
      :param file_path:
      :return: a dict, named:label2index_dict
      """
-    file_object = open(file_path, mode='r') #TODO add  encoding='utf8' for version python3
+    file_object = open(file_path, mode='r') #TODO add encoding='utf8' for version python 3
     lines = file_object.readlines()
     label2index_dict = {}
     for i, label in enumerate(lines):
-        label = label.strip() #.decode("utf-8")
+        label = label.decode("utf-8").strip() #TODO .decode("utf-8") for python 2.7
         label2index_dict[label] = i
     return label2index_dict
 

@@ -7,7 +7,7 @@
 import tensorflow as tf
 import numpy as np
 from predictor.model import HierarchicalAttention
-from data_util import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data,imprisonment_mean,imprisonment_std
+from data_util import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data #,imprisonment_mean,imprisonment_std
 import os
 from evaluation_matrix import *
 import gensim
@@ -27,10 +27,10 @@ tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate") #0.001
 tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
-tf.app.flags.DEFINE_float("keep_dropout_rate", 0.8, "percentage to keep when using dropout.") #0.65一次衰减多少
+tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
-tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
+tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #300-->64
 tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
 tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
 
@@ -38,13 +38,13 @@ tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,
 tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
+tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling") #text_cnn
+tf.app.flags.DEFINE_string("model","dp_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
 filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
@@ -239,7 +239,10 @@ def assign_pretrained_word_embedding(sess,vocabulary_index2word,vocab_size,model
         if count_==0:
             print("pretrained word embedding size:",str(len(vector)))
             count_=count_+1
-        word2vec_dict[word] = vector /np.linalg.norm(vector)
+        if '.bin' not in word2vec_model_path:
+            word2vec_dict[word] = vector
+        else:
+            word2vec_dict[word] = vector /np.linalg.norm(vector) # normalize vector only when word2vec data is a .bin file
     word_embedding_2dlist = [[]] * vocab_size  # create an empty word_embedding list.
     word_embedding_2dlist[0] = np.zeros(FLAGS.embed_size)  # assign empty for first word:'PAD'
     word_embedding_2dlist[1] = np.zeros(FLAGS.embed_size)  # assign empty for first word:'PAD'
