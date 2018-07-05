@@ -35,7 +35,7 @@ tf.app.flags.DEFINE_integer("hidden_size",512,"hidden size") #128
 tf.app.flags.DEFINE_integer("num_filters",512,"number of filter for a filter map used in CNN.") #128
 
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
-tf.app.flags.DEFINE_integer("num_epochs",21,"number of epochs to run.")
+tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
 tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
@@ -177,7 +177,17 @@ def main(_):
                     sess.run(model.learning_rate_decay_half_op)
 
         # 5.最后在测试集上做测试，并报告测试准确率 Testto 0.0
-        #test_loss,macrof1,microf1 = do_eval(sess, textCNN, testX, testY,iteration)
+        loss_test, f1_macro_accasation_test, f1_micro_accasation_test, f1_a_article_test, f1_i_aritcle_test, f1_a_death_test, f1_i_death_test, f1_a_life_test, f1_i_life_test, score_penalty_test=\
+            do_eval(sess, model, test, iteration, accusation_num_classes, article_num_classes, accusation_label2index)
+        print("TEST.FINAL.Epoch %d ValidLoss:%.3f\tMacro_f1_accasation:%.3f\tMicro_f1_accsastion:%.3f\tMacro_f1_article:%.3f\tMicro_f1_article:%.3f\tMacro_f1_deathpenalty:%.3f\t"
+                    "Micro_f1_deathpenalty:%.3f\tMacro_f1_lifeimprisonment:%.3f\tMicro_f1_lifeimprisonment:%.3f\t"
+                    % (epoch, loss_test, f1_macro_accasation_test, f1_micro_accasation_test, f1_a_article_test, f1_i_aritcle_test, f1_a_death_test,
+                       f1_i_death_test, f1_a_life_test, f1_i_life_test))
+        accasation_score_test = ((f1_macro_accasation_test + f1_micro_accasation_test) / 2.0) * 100.0
+        article_score_test = ((f1_a_article_test + f1_i_aritcle_test) / 2.0) * 100.0
+        score_all_test = accasation_score_test + article_score_test + score_penalty_test
+        print("TEST.Accasation Score:", accasation_score_test, ";2.Article Score:", article_score_test, ";3.Penalty Score:",score_penalty_test, ";Score ALL:", score_all_test)
+
         #print("Test Loss:%.3f\tMacro f1:%.3f\tMicro f1:%.3f" % (test_loss,macrof1,microf1))
         print("training completed...")
     pass
