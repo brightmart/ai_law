@@ -130,7 +130,7 @@ def main(_):
                 ########################################################################################################
                 if start!=0 and start%(2000*FLAGS.batch_size)==0: # eval every 400 steps.
                     loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle, f1_a_death, f1_i_death, f1_a_life, f1_i_life, score_penalty = \
-                        do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes)
+                        do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index)
                     accasation_score=((f1_macro_accasation+f1_micro_accasation)/2.0)*100.0
                     article_score=((f1_a_article+f1_i_aritcle)/2.0)*100.0
                     score_all=accasation_score+article_score+score_penalty #3ecfDzJbjUvZPUdS
@@ -152,7 +152,7 @@ def main(_):
             print(epoch,FLAGS.validate_every,(epoch % FLAGS.validate_every==0))
             if epoch % FLAGS.validate_every==0:
                 loss,f1_macro_accasation,f1_micro_accasation,f1_a_article,f1_i_aritcle,f1_a_death,f1_i_death,f1_a_life,f1_i_life,score_penalty=\
-                    do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classes)
+                    do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index)
                 accasation_score = ((f1_macro_accasation + f1_micro_accasation) / 2.0) * 100.0
                 article_score = ((f1_a_article + f1_i_aritcle) / 2.0) * 100.0
                 score_all = accasation_score + article_score + score_penalty
@@ -182,7 +182,7 @@ def main(_):
         print("training completed...")
     pass
 
-def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classes):
+def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index):
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,_,_=get_part_validation_data(valid)
     number_examples=len(valid_X)
     print("number_examples:",number_examples)
@@ -216,7 +216,9 @@ def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classe
         eval_counter=eval_counter+1
 
     #compute f1_micro & f1_macro for accusation,article,deathpenalty,lifeimprisonment
-    f1_micro_accusation,f1_macro_accusation=compute_micro_macro(label_dict_accusation)
+    f1_micro_accusation,f1_macro_accusation=compute_micro_macro(label_dict_accusation) #label_dict_accusation is a dict, key is: accusation,value is: (TP,FP,FN). where TP is number of True Positive
+    compute_accusation_f1_score_write_for_debug(label_dict_accusation, accusation_label2index)
+
     f1_micro_article, f1_macro_article = compute_micro_macro(label_dict_article)
     f1_micro_deathpenalty, f1_macro_deathpenalty = compute_micro_macro(label_dict_deathpenalty)
     f1_micro_lifeimprisonment, f1_macro_lifeimprisonment = compute_micro_macro(label_dict_lifeimprisonment)

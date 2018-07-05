@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import random
-
+import codecs
 """
 compute single evaulation matrix for task1,task2 and task3:
 compute f1 score(micro,macro) for accusation & relevant article, and score for pentaly
@@ -171,6 +171,34 @@ def compute_f1_macro_use_TFFPFN(label_dict):
         f1_score_sum=f1_score_sum+f1_score
     f1_score=f1_score_sum/float(num_classes)
     return f1_score
+
+#[this function is for each error purpose only]
+def compute_accusation_f1_score_write_for_debug(label_dict_accusation,accusation_label2index):
+    """
+    compute f1 score for each accusation. basicly you can also use other function to get result
+    :param label_dict_accusation: {label:(TP,FP,FN)}
+    :return: a dict. key is accusation name, value is f1 score.
+    """
+    accusation_f1score_dict={}
+    # 1. compute f1 score for each accusation.
+    for label, tuplee in label_dict_accusation.items():
+        TP, FP, FN = tuplee
+        f1_score_single = compute_f1(TP, FP, FN, 'accusation_normal_f1_score')
+        accusation_index2label = {kv[1]: kv[0] for kv in accusation_label2index.items()}
+        label_name=accusation_index2label[label]
+        accusation_f1score_dict[label_name]=f1_score_single
+
+    # 2. each to file system for debug purpose.
+    accusation_f1score_file='debug_accusation_accuracy.txt'
+    article_voc_object = codecs.open(accusation_f1score_file, mode='a', encoding='utf-8')
+    article_voc_object.write("\n\n")
+
+    tuple_list = sorted(accusation_f1score_dict.items(), lambda x, y: cmp(x[1], y[1]), reverse=False)
+    for tuplee in tuple_list:
+        accusation_name,f1_score=tuplee
+        article_voc_object.write(accusation_name+":"+str(f1_score)+"\n")
+    article_voc_object.close()
+    return accusation_f1score_dict
 
 def compute_f1(TP,FP,FN,compute_type):
     """
