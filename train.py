@@ -170,7 +170,7 @@ def main(_):
                     accasation_score_best = accasation_score
             #if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
             #if (epoch == 1 or epoch == 3 or epoch == 6 or epoch == 9 or epoch == 12 or epoch == 18):
-            if (epoch == 0 or epoch == 2 or epoch == 4 or epoch == 7 or epoch == 9 or epoch == 13):
+            if (epoch == 0 or epoch == 2 or epoch == 4 or epoch == 6 or epoch == 9 or epoch == 13):
 
                 for i in range(2):
                     print(i, "Going to decay learning rate by half.")

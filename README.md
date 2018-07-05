@@ -420,11 +420,15 @@ Notice: offline score is lower than online score for about 4.0.
    relevant law. the decision we made about accusation, relevant punishment will also influence punishment.
    
    
+9.Error Analysis
+-------------------------------------------------------------------------  
+   during each validation, f1 score for each label in accusation will be printed in debug_accusation_accuracy.txt file,
    
+   those f1 scores are lower will be in list first, so you can pay more attention on to improve accuracy of these labels in accusation task.  
   
 
 
-9.Usage
+10.Usage
 -------------------------------------------------------------------------
   train:
 
@@ -452,7 +456,7 @@ Notice: offline score is lower than online score for about 4.0.
 
 
 
-10.Environment
+11.Environment
 -------------------------------------------------------------------------
    python 2 + tensorflow 1.8
 
@@ -465,7 +469,7 @@ Notice: offline score is lower than online score for about 4.0.
       sys.setdefaultencoding('utf-8')
 
 
-11.Model Details
+12.Model Details
 -------------------------------------------------------------------------
 1).Hierarchical Attention Network:
 
@@ -578,7 +582,7 @@ China law research cup judicial artificial intelligence challenge:
 
 
 
-12.TODO
+13.TODO
 -------------------------------------------------------------------------
    0) normalize numbers for money to standard format or to some range
 
@@ -593,7 +597,7 @@ China law research cup judicial artificial intelligence challenge:
    5) try pure CNN or attention models to speed up training(CNN DONE)
 
 
-13.Conclusion
+14.Conclusion
 -------------------------------------------------------------------------
 
   1) it is possible to solve the problem in a way of joint model. each sub task shared same input and representation.
@@ -606,7 +610,7 @@ China law research cup judicial artificial intelligence challenge:
 
 
 
-14.Reference
+15.Reference
 -------------------------------------------------------------------------
   1) <a href='https://arxiv.org/pdf/1408.5882v2.pdf'>TextCNN:Convolutional Neural Networks for Sentence Classification</a>
 
