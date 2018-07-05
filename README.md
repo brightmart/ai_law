@@ -442,7 +442,7 @@ Notice: offline score is lower than online score for about 4.0.
 
     --hidden_size: hidden size
 
-  predict:
+  predict(or test):
 
      python3 main.py
 

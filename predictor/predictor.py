@@ -14,7 +14,6 @@ class Predictor(object):
         """
         self.batch_size =1024 #512
 
-
         FLAGS = tf.app.flags.FLAGS
         tf.app.flags.DEFINE_string("ckpt_dir", "predictor/checkpoint/", "checkpoint location for the model")
         tf.app.flags.DEFINE_string("vocab_word_path", "predictor/word_freq.txt", "path of word vocabulary.")
