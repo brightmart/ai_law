@@ -107,13 +107,14 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
     test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
 
-    # 4. save to file system if vocabulary of words not exists
-    #if not os.path.exists(cache_file):
-    #    with open(cache_file, 'ab') as data_f:
-    #        print("going to dump train/valid/test data to file sytem!")
-    #        pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
     X_array=np.array(X)
     train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
+
+    # 4. save to file system if vocabulary of words not exists
+    if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
+        with open(cache_file, 'ab') as data_f:
+            print("going to dump train/valid/test data to file sytem!")
+            pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
     return train ,valid,test
 
 splitter=':'
