@@ -25,11 +25,11 @@ class Predictor(object):
         tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
         tf.app.flags.DEFINE_integer("sentence_len", 400, "max sentence length")
         tf.app.flags.DEFINE_integer("num_sentences", 16, "number of sentences")
-        tf.app.flags.DEFINE_integer("embed_size", 300, "embedding size") #64
-        tf.app.flags.DEFINE_integer("hidden_size", 512, "hidden size")  #128
-        tf.app.flags.DEFINE_integer("num_filters", 512, "number of filter for a filter map used in CNN.") #256
+        tf.app.flags.DEFINE_integer("embed_size", 64, "embedding size") #64
+        tf.app.flags.DEFINE_integer("hidden_size", 128, "hidden size")  #128
+        tf.app.flags.DEFINE_integer("num_filters", 128, "number of filter for a filter map used in CNN.") #256
         tf.app.flags.DEFINE_boolean("is_training", False, "is traning.true:tranining,false:testing/inference")
-        tf.app.flags.DEFINE_string("model", "text_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
+        tf.app.flags.DEFINE_string("model", "dp_cnn", "name of model:han,c_gru,c_gru2,gru,text_cnn")
         #tf.app.flags.DEFINE_boolean("is_training_flag", False, "is traning.true:tranining,false:testing/inference")
 
         filter_sizes = [2,3,4,5]#,6,7,8]#[2,3,4,5]#[6, 7, 8, 9, 10]  # [30,40,50] #8

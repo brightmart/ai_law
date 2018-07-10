@@ -30,21 +30,21 @@ tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.")
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
 tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
-tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #300-->64
-tf.app.flags.DEFINE_integer("hidden_size",512,"hidden size") #128
-tf.app.flags.DEFINE_integer("num_filters",512,"number of filter for a filter map used in CNN.") #128
+tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
+tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
+tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
 
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
+tf.app.flags.DEFINE_string("word2vec_model_path","data/data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
+tf.app.flags.DEFINE_string("model","dp_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
 filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
@@ -128,7 +128,7 @@ def main(_):
                     print("Loss_accusation:%.3f\tLoss_article:%.3f\tLoss_deathpenalty:%.3f\tLoss_lifeimprisonment:%.3f\tLoss_imprisonment:%.3f\tL2_loss:%.3f\tCurrent_loss:%.3f\t"
                           %(loss_accusation,loss_article,loss_deathpenalty,loss_lifeimprisonment,loss_imprisonment,l2_loss,current_loss))
                 ########################################################################################################
-                if start!=0 and start%(2000*FLAGS.batch_size)==0: # eval every 400 steps.
+                if start!=0 and start%(3000*FLAGS.batch_size)==0: # eval every 400 steps.
                     loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle, f1_a_death, f1_i_death, f1_a_life, f1_i_life, score_penalty = \
                         do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index)
                     accasation_score=((f1_macro_accasation+f1_micro_accasation)/2.0)*100.0

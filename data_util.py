@@ -42,8 +42,8 @@ def build_chunk(lines, chunk_num=10):
     return chunks
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=12000,
-                         test_number=3000,process_num=30):
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=140000,#12000
+                         test_number=10000,process_num=30):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -118,7 +118,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     return train ,valid,test
 
 splitter=':'
-num_mini_examples=1900
+num_mini_examples=3500 #1900
 
 
 def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
@@ -181,7 +181,6 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty
         death_penalty = deathpenalty_label2index[death_penalty]
         y_deathpenalty = transform_multilabel_as_multihot(death_penalty, 2)
-        #Y_deathpenalty.append(y_deathpenalty) #TODO REMOVE 2018.07.02
 
         # 5.transform life imprisonment.discrete
         life_imprisonment = json_string['meta']['term_of_imprisonment']['life_imprisonment']
@@ -196,11 +195,13 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         weight_accusation=1.0
         weight_artilce=1.0
         if data_type == 'train': #set specially weight and copy some examples when it is training data.
-            freq_accusation = accusation_freq_dict[accusation_list[0]]
-            freq_article = article_freq_dict[article_list[0]]
+
+            freq_accusation =min([accusation_freq_dict[x] for x in accusation_list]) # accusation_freq_dict[accusation_list[0]]
+            freq_article =min([article_freq_dict[x] for x in article_list]) # article_freq_dict[article_list[0]]
+
             if freq_accusation <= num_mini_examples or freq_article <= num_mini_examples:
                 freq=(freq_accusation+freq_article)/2
-                num_copy=int(max(1,num_mini_examples/freq))
+                num_copy=int(max(3,num_mini_examples/freq))
                 if i%1000==0: print("####################freq_accusation:",freq_accusation,"freq_article:",freq_article,";num_copy:",num_copy)
             weight_accusation, weight_artilce=get_weight_freq_article(freq_accusation, freq_article)
 
@@ -208,7 +209,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
             X.append(x)
             Y_accusation.append(y_accusation)
             Y_article.append(y_article)
-            Y_deathpenalty.append(y_deathpenalty) #TODO
+            Y_deathpenalty.append(y_deathpenalty)
             Y_lifeimprisonment.append(y_lifeimprisonment)
             Y_imprisonment.append(float(imprisonment))
             weights_accusation.append(weight_accusation)
