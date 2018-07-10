@@ -12,6 +12,8 @@ from collections import Counter
 import os
 #import pickle
 import cPickle as pickle
+import h5py
+
 import json
 import jieba
 
@@ -42,7 +44,7 @@ def build_chunk(lines, chunk_num=10):
     return chunks
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=140000,#12000
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=120000,#12000
                          test_number=10000,process_num=30,tokenize_style='word'):
     """
     convert data as indexes using word2index dicts.
@@ -55,9 +57,15 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.pik'
     print("cache_path:",cache_file,"train_valid_test_file_exists:",os.path.exists(cache_file))
     if os.path.exists(cache_file):
-        with open(cache_file, 'rb') as data_f:
-            print("going to load cache file from file system and return")
-            return pickle.load(data_f)
+        #with open(cache_file, 'rb') as data_f:
+        print("going to load cache file from file system and return")
+        f = h5py.File(cache_file, 'r')
+        train=f['train']
+        valid=f['valid']
+        test=f['test']
+        f.close()
+        return train,valid,test
+        #return pickle.load(data_f)
     # 2. read source file
     train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
     train_lines_original = train_file_object.readlines()
@@ -65,6 +73,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     if test_mode:
         train_lines_original = train_lines_original[0:1000 * 100]  # 1000
+        valid_number=20000
 
     number_examples=len(train_lines_original)
     valid_start=number_examples-(valid_number+test_number)
@@ -112,9 +121,14 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     # 4. save to file system if vocabulary of words not exists
     if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
-        with open(cache_file, 'ab') as data_f:
-            print("going to dump train/valid/test data to file sytem!")
-            pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+        #with open(cache_file, 'ab') as data_f:
+        print("going to dump train/valid/test data to file sytem!")
+            #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+        f = h5py.File(cache_file, 'w')
+        f['train']=train
+        f['valid'] = valid
+        f['test'] = test
+        f.close()
     return train ,valid,test
 
 splitter=':'

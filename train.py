@@ -69,7 +69,7 @@ def main(_):
     #print some message for debug purpose
     print("length of training data:",len(train_X),";valid data:",len(valid_X),";test data:",len(test_X))
 
-    if len(train_X[0])>100000:train_X=train_X[0] #todo hack when used by python2.7, and reload from file systmem, that original shape changed.
+    #if len(train_X[0])>100000:train_X=train_X[0] #todo hack when used by python2.7, and reload from file systmem, that original shape changed.
     print("trainX_[0]:", train_X[0]);
 
     train_Y_accusation_short1 = get_target_label_short(train_Y_accusation[0]);train_Y_accusation_short2 = get_target_label_short(train_Y_accusation[1]);train_Y_accusation_short3 = get_target_label_short(train_Y_accusation[2]);train_Y_accusation_short4 = get_target_label_short(train_Y_accusation[20]);train_Y_accusation_short5 = get_target_label_short(train_Y_accusation[200])
