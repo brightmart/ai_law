@@ -38,7 +38,7 @@ tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
-tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
+tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")#
 tf.app.flags.DEFINE_string("word2vec_model_path","./data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")

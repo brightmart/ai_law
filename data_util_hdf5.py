@@ -12,6 +12,8 @@ from collections import Counter
 import os
 #import pickle
 import cPickle as pickle
+import h5py
+
 import json
 import jieba
 
@@ -42,8 +44,8 @@ def build_chunk(lines, chunk_num=10):
     return chunks
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
-                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=130000,
-                         test_number=3000,process_num=30):
+                         deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=120000,#12000
+                         test_number=10000,process_num=30,tokenize_style='word'):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -52,12 +54,48 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     :return:
     """
     # 1. use cache file if exist
-    cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.pik'
+    cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.h5'
     print("cache_path:",cache_file,"train_valid_test_file_exists:",os.path.exists(cache_file))
     if os.path.exists(cache_file):
-        with open(cache_file, 'rb') as data_f:
-            print("going to load cache file from file system and return")
-            return pickle.load(data_f)
+        #with open(cache_file, 'rb') as data_f:
+        print("going to load cache file from file system and return")
+        f = h5py.File(cache_file, 'r')
+        #train=f['train']
+        #valid=f['valid']
+        #test=f['test']
+        X_array=f['train_X_array']
+        Y_accusation=f['train_Y_accusation']
+        Y_article=f['train_Y_article']
+        Y_deathpenalty=f['train_Y_deathpenalty']
+        Y_lifeimprisonment=f['train_Y_lifeimprisonment']
+        Y_imprisonment=f['train_Y_imprisonment']
+        weights_accusation=f['train_weights_accusation']
+        weights_article=f['train_weights_article']
+        train=np.array(X_array),np.array(Y_accusation),np.array(Y_article),np.array(Y_deathpenalty),np.array(Y_lifeimprisonment),np.array(Y_imprisonment),np.array(weights_accusation),np.array(weights_article)
+
+        valid_X_array=f['valid_X_array']
+        valid_Y_accusation=f['valid_Y_accusation']
+        valid_Y_article=f['valid_Y_article']
+        valid_Y_deathpenalty=f['valid_Y_deathpenalty']
+        valid_Y_lifeimprisonment=f['valid_Y_lifeimprisonment']
+        valid_Y_imprisonment=f['valid_Y_imprisonment']
+        valid_weights_accusation=f['valid_weights_accusation']
+        valid_weights_article=f['valid_weights_article']
+        valid=np.array(valid_X_array),np.array(valid_Y_accusation),np.array(valid_Y_article),np.array(valid_Y_deathpenalty),np.array(valid_Y_lifeimprisonment),np.array(valid_Y_imprisonment),np.array(valid_weights_accusation),np.array(valid_weights_article)
+
+        test_X_array=f['test_X_array']
+        test_Y_accusation=f['test_Y_accusation']
+        test_Y_article=f['test_Y_article']
+        test_Y_deathpenalty=f['test_Y_deathpenalty']
+        test_Y_lifeimprisonment=f['test_Y_lifeimprisonment']
+        test_Y_imprisonment=f['test_Y_imprisonment']
+        test_weights_accusation=f['test_weights_accusation']
+        test_weights_article=f['test_weights_article']
+        test=np.array(test_X_array),np.array(test_Y_accusation),np.array(test_Y_article),np.array(test_Y_deathpenalty),np.array(test_Y_lifeimprisonment),np.array(test_Y_imprisonment),np.array(test_weights_accusation),np.array(test_weights_article)
+
+        f.close()
+        return train,valid,test
+        #return pickle.load(data_f)
     # 2. read source file
     train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
     train_lines_original = train_file_object.readlines()
@@ -65,6 +103,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     if test_mode:
         train_lines_original = train_lines_original[0:1000 * 100]  # 1000
+        valid_number=20000
 
     number_examples=len(train_lines_original)
     valid_start=number_examples-(valid_number+test_number)
@@ -85,7 +124,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         file_namee=cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik" #cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
         print("start multi-processing:",chunk_id,file_namee)
         # apply_async
-        pool.apply_async(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
+        pool.apply_async(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope,tokenize_style))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
     pool.close()
     pool.join()
     print("finish reduce stage...")
@@ -104,25 +143,57 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     #train=transform_data_to_ind
     # ex(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
-    valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
-    test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
+    valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope,tokenize_style)
+    valid_X_array, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment, valid_weights_accusation, valid_weights_article=valid
+
+    test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope,tokenize_style)
+    test_X_array, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment, test_weights_accusation, test_weights_article=test
 
     X_array=np.array(X)
     train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
 
     # 4. save to file system if vocabulary of words not exists
-    if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
-        with open(cache_file, 'ab') as data_f:
-            print("going to dump train/valid/test data to file sytem!")
-            pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+    if 1==2:#if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
+        #with open(cache_file, 'ab') as data_f:
+        print("going to dump train/valid/test data to file sytem!")
+            #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+        f = h5py.File(cache_file, 'w')
+        f['train_X_array']=X_array
+        f['train_Y_accusation']=Y_accusation
+        f['train_Y_article']=Y_article
+        f['train_Y_deathpenalty']=Y_deathpenalty
+        f['train_Y_lifeimprisonment']=Y_lifeimprisonment
+        f['train_Y_imprisonment']=Y_imprisonment
+        f['train_weights_accusation']=weights_accusation
+        f['train_weights_article']=weights_article
+
+        f['valid_X_array']=valid_X_array
+        f['valid_Y_accusation']=valid_Y_accusation
+        f['valid_Y_article']=valid_Y_article
+        f['valid_Y_deathpenalty']=valid_Y_deathpenalty
+        f['valid_Y_lifeimprisonment']=valid_Y_lifeimprisonment
+        f['valid_Y_imprisonment']=valid_Y_imprisonment
+        f['valid_weights_accusation']=valid_weights_accusation
+        f['valid_weights_article']=valid_weights_article
+
+        f['test_X_array']=test_X_array
+        f['test_Y_accusation']=test_Y_accusation
+        f['test_Y_article']=test_Y_article
+        f['test_Y_deathpenalty']=test_Y_deathpenalty
+        f['test_Y_lifeimprisonment']=test_Y_lifeimprisonment
+        f['test_Y_imprisonment']=test_Y_imprisonment
+        f['test_weights_accusation']=test_weights_accusation
+        f['test_weights_article']=test_weights_article
+        f.close()
+
     return train ,valid,test
 
 splitter=':'
-num_mini_examples=3500
+num_mini_examples=3500 #1900
 
 
 def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                            sentence_len,data_type,name_scope):#reverse_flag=False
+                            sentence_len,data_type,name_scope,tokenize_style):#reverse_flag=False
     """
     transform data to index using vocab and label dict.
     :param lines:
@@ -155,7 +226,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
 
         # 1. transform input x.discrete
         facts = json_string['fact']
-        input_list = token_string_as_list(facts)  # tokenize
+        input_list = token_string_as_list(facts,tokenize_style=tokenize_style)  # tokenize
         x = [vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
         if i % 100000 == 0:print(i,"#######transform_data_to_index.x:",x)
         x=pad_truncate_list(x, sentence_len) #ADD 2018.05.24
@@ -181,7 +252,6 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         death_penalty = json_string['meta']['term_of_imprisonment']['death_penalty']  # death_penalty
         death_penalty = deathpenalty_label2index[death_penalty]
         y_deathpenalty = transform_multilabel_as_multihot(death_penalty, 2)
-        #Y_deathpenalty.append(y_deathpenalty) #TODO REMOVE 2018.07.02
 
         # 5.transform life imprisonment.discrete
         life_imprisonment = json_string['meta']['term_of_imprisonment']['life_imprisonment']
@@ -196,11 +266,11 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         weight_accusation=1.0
         weight_artilce=1.0
         if data_type == 'train': #set specially weight and copy some examples when it is training data.
-            #freq_accusation = accusation_freq_dict[accusation_list[0]]
-            #freq_article = article_freq_dict[article_list[0]]
+
             freq_accusation =min([accusation_freq_dict[x] for x in accusation_list]) # accusation_freq_dict[accusation_list[0]]
             freq_article =min([article_freq_dict[x] for x in article_list]) # article_freq_dict[article_list[0]]
-            if (freq_accusation <= num_mini_examples or freq_article <= num_mini_examples) and (freq_accusation<1000*60 and freq_article<1000*60):
+
+            if freq_accusation <= num_mini_examples or freq_article <= num_mini_examples:
                 freq=(freq_accusation+freq_article)/2
                 num_copy=int(max(3,num_mini_examples/freq))
                 if i%1000==0: print("####################freq_accusation:",freq_accusation,"freq_article:",freq_article,";num_copy:",num_copy)
@@ -210,7 +280,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
             X.append(x)
             Y_accusation.append(y_accusation)
             Y_article.append(y_article)
-            Y_deathpenalty.append(y_deathpenalty) #TODO
+            Y_deathpenalty.append(y_deathpenalty)
             Y_lifeimprisonment.append(y_lifeimprisonment)
             Y_imprisonment.append(float(imprisonment))
             weights_accusation.append(weight_accusation)
@@ -268,7 +338,7 @@ def transform_mulitihot_as_dense_list(multihot_list):
 
 
 #use pretrained word embedding to get word vocabulary and labels, and its relationship with index
-def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False):
+def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False,tokenize_style='word'):
     """
     create vocabulary
     :param training_data_path:
@@ -311,7 +381,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
                 print(i)
             json_string = json.loads(line.strip())
             facts = json_string['fact']
-            input_list = token_string_as_list(facts)
+            input_list = token_string_as_list(facts,tokenize_style=tokenize_style)
             if i % 10000 == 0:
                 print("create_or_load_vocabulary:")
                 print(input_list)
@@ -390,7 +460,7 @@ def token_string_as_list(string,tokenize_style='word'):
     listt=[x for x in listt if x.strip()]
     return listt
 
-def get_part_validation_data(valid,num_valid=6000):
+def get_part_validation_data(valid,num_valid=6000*20):#6000
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,weight_accusations,weight_artilces=valid
     number_examples=len(valid_X)
     permutation = np.random.permutation(number_examples)[0:num_valid]
