@@ -43,7 +43,7 @@ def build_chunk(lines, chunk_num=10):
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
                          deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=140000,#12000
-                         test_number=10000,process_num=30):
+                         test_number=10000,process_num=30,tokenize_style='word'):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -85,7 +85,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         file_namee=cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik" #cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
         print("start multi-processing:",chunk_id,file_namee)
         # apply_async
-        pool.apply_async(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
+        pool.apply_async(transform_data_to_index,args=(each_chunk, file_namee, vocab_word2index, accusation_label2index,article_label2index,deathpenalty_label2index, lifeimprisonment_label2index,sentence_len,'train',name_scope,tokenize_style))  # a common function named 'task' will be invoked for each file; args include sub list and name of target file.
     pool.close()
     pool.join()
     print("finish reduce stage...")
@@ -104,8 +104,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     #train=transform_data_to_ind
     # ex(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
-    valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope)
-    test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope)
+    valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope,tokenize_style)
+    test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope,tokenize_style)
 
     X_array=np.array(X)
     train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
@@ -122,7 +122,7 @@ num_mini_examples=3500 #1900
 
 
 def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                            sentence_len,data_type,name_scope):#reverse_flag=False
+                            sentence_len,data_type,name_scope,tokenize_style):#reverse_flag=False
     """
     transform data to index using vocab and label dict.
     :param lines:
@@ -155,7 +155,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
 
         # 1. transform input x.discrete
         facts = json_string['fact']
-        input_list = token_string_as_list(facts)  # tokenize
+        input_list = token_string_as_list(facts,tokenize_style=tokenize_style)  # tokenize
         x = [vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
         if i % 100000 == 0:print(i,"#######transform_data_to_index.x:",x)
         x=pad_truncate_list(x, sentence_len) #ADD 2018.05.24
@@ -267,7 +267,7 @@ def transform_mulitihot_as_dense_list(multihot_list):
 
 
 #use pretrained word embedding to get word vocabulary and labels, and its relationship with index
-def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False):
+def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_size,name_scope='cnn',test_mode=False,tokenize_style='word'):
     """
     create vocabulary
     :param training_data_path:
@@ -310,7 +310,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
                 print(i)
             json_string = json.loads(line.strip())
             facts = json_string['fact']
-            input_list = token_string_as_list(facts)
+            input_list = token_string_as_list(facts,tokenize_style=tokenize_style)
             if i % 10000 == 0:
                 print("create_or_load_vocabulary:")
                 print(input_list)

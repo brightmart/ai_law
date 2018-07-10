@@ -21,6 +21,7 @@ tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of v
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
 tf.app.flags.DEFINE_string("predict_path","./predictor","path of traning data.")
 tf.app.flags.DEFINE_string("ckpt_dir","./predictor/checkpoint/","checkpoint location for the model") #save to here, so make it easy to upload for test
+tf.app.flags.DEFINE_string("tokenize_style","word","checkpoint location for the model") #save to here, so make it easy to upload for test
 
 tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.") #80000
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate") #0.001
@@ -38,7 +39,7 @@ tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,
 tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")
-tf.app.flags.DEFINE_string("word2vec_model_path","data/data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
+tf.app.flags.DEFINE_string("word2vec_model_path","./data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
@@ -53,7 +54,7 @@ stride_length=1
 def main(_):
     print("model:",FLAGS.model)
     name_scope=FLAGS.model
-    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode)
+    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style)
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}
     vocab_size = len(vocab_word2index);print("cnn_model.vocab_size:",vocab_size);
@@ -61,7 +62,7 @@ def main(_):
     deathpenalty_num_classes=len(deathpenalty_label2index);lifeimprisonment_num_classes=len(lifeimprisonment_label2index)
     print("accusation_num_classes:",accusation_num_classes);print("article_num_clasess:",article_num_classes)
     train,valid, test= load_data_multilabel(FLAGS.traning_data_file,FLAGS.valid_data_file,FLAGS.test_data_path,vocab_word2index, accusation_label2index,articles_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode)
+                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style)
     train_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
     test_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
