@@ -29,7 +29,7 @@ tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size for training/evaluati
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
-tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")
+tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")#b
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
 tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
 tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
@@ -54,7 +54,7 @@ stride_length=1
 def main(_):
     print("model:",FLAGS.model)
     name_scope=FLAGS.model
-    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode) #tokenize_style=FLAGS.tokenize_style
+    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style) #tokenize_style=FLAGS.tokenize_style
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}
     vocab_size = len(vocab_word2index);print("cnn_model.vocab_size:",vocab_size);
@@ -62,7 +62,7 @@ def main(_):
     deathpenalty_num_classes=len(deathpenalty_label2index);lifeimprisonment_num_classes=len(lifeimprisonment_label2index)
     print("accusation_num_classes:",accusation_num_classes);print("article_num_clasess:",article_num_classes)
     train,valid, test= load_data_multilabel(FLAGS.traning_data_file,FLAGS.valid_data_file,FLAGS.test_data_path,vocab_word2index, accusation_label2index,articles_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode) #,tokenize_style=FLAGS.tokenize_style
+                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style) #,tokenize_style=FLAGS.tokenize_style
     train_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
     test_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
@@ -132,7 +132,7 @@ def main(_):
                     print("Loss_accusation:%.3f\tLoss_article:%.3f\tLoss_deathpenalty:%.3f\tLoss_lifeimprisonment:%.3f\tLoss_imprisonment:%.3f\tL2_loss:%.3f\tCurrent_loss:%.3f\t"
                           %(loss_accusation,loss_article,loss_deathpenalty,loss_lifeimprisonment,loss_imprisonment,l2_loss,current_loss))
                 ########################################################################################################
-                if start!=0 and start%(3000*FLAGS.batch_size)==0: # eval every 400 steps.
+                if start!=0 and start%(3900*FLAGS.batch_size)==0: # eval every 400 steps.
                     loss, f1_macro_accasation, f1_micro_accasation, f1_a_article, f1_i_aritcle, f1_a_death, f1_i_death, f1_a_life, f1_i_life, score_penalty = \
                         do_eval(sess, model, valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index)
                     accasation_score=((f1_macro_accasation+f1_micro_accasation)/2.0)*100.0
