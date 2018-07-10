@@ -60,9 +60,39 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         #with open(cache_file, 'rb') as data_f:
         print("going to load cache file from file system and return")
         f = h5py.File(cache_file, 'r')
-        train=f['train']
-        valid=f['valid']
-        test=f['test']
+        #train=f['train']
+        #valid=f['valid']
+        #test=f['test']
+        X_array=f['train_X_array']
+        Y_accusation=f['train_Y_accusation']
+        Y_article=f['train_Y_article']
+        Y_deathpenalty=f['train_Y_deathpenalty']
+        Y_lifeimprisonment=f['train_Y_lifeimprisonment']
+        Y_imprisonment=f['train_Y_imprisonment']
+        weights_accusation=f['train_weights_accusation']
+        weights_article=f['train_weights_article']
+        train=X_array,Y_accusation,Y_article,Y_deathpenalty,Y_lifeimprisonment,Y_imprisonment,weights_accusation,weights_article
+
+        valid_X_array=f['valid_X_array']
+        valid_Y_accusation=f['valid_Y_accusation']
+        valid_Y_article=f['valid_Y_article']
+        valid_Y_deathpenalty=f['valid_Y_deathpenalty']
+        valid_Y_lifeimprisonment=f['valid_Y_lifeimprisonment']
+        valid_Y_imprisonment=f['valid_Y_imprisonment']
+        valid_weights_accusation=f['valid_weights_accusation']
+        valid_weights_article=f['valid_weights_article']
+        valid=valid_X_array,valid_Y_accusation,valid_Y_article,valid_Y_deathpenalty,valid_Y_lifeimprisonment,valid_Y_imprisonment,valid_weights_accusation,valid_weights_article
+
+        test_X_array=f['test_X_array']
+        test_Y_accusation=f['test_Y_accusation']
+        test_Y_article=f['test_Y_article']
+        test_Y_deathpenalty=f['test_Y_deathpenalty']
+        test_Y_lifeimprisonment=f['test_Y_lifeimprisonment']
+        test_Y_imprisonment=f['test_Y_imprisonment']
+        test_weights_accusation=f['test_weights_accusation']
+        test_weights_article=f['test_weights_article']
+        test=test_X_array,test_Y_accusation,test_Y_article,test_Y_deathpenalty,test_Y_lifeimprisonment,test_Y_imprisonment,test_weights_accusation,test_weights_article
+
         f.close()
         return train,valid,test
         #return pickle.load(data_f)
@@ -114,7 +144,10 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     #train=transform_data_to_ind
     # ex(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
     valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope,tokenize_style)
+    valid_X_array, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment, valid_weights_accusation, valid_weights_article=valid
+
     test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope,tokenize_style)
+    test_X_array, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment, test_weights_accusation, test_weights_article=test
 
     X_array=np.array(X)
     train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
@@ -125,10 +158,34 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         print("going to dump train/valid/test data to file sytem!")
             #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
         f = h5py.File(cache_file, 'w')
-        f['train']=train
-        f['valid'] = valid
-        f['test'] = test
+        f['train_X_array']=X_array
+        f['train_Y_accusation']=Y_accusation
+        f['train_Y_article']=Y_article
+        f['train_Y_deathpenalty']=Y_deathpenalty
+        f['train_Y_lifeimprisonment']=Y_lifeimprisonment
+        f['train_Y_imprisonment']=Y_imprisonment
+        f['train_weights_accusation']=weights_accusation
+        f['train_weights_article']=weights_article
+
+        f['valid_X_array']=valid_X_array
+        f['valid_Y_accusation']=valid_Y_accusation
+        f['valid_Y_article']=valid_Y_article
+        f['valid_Y_deathpenalty']=valid_Y_deathpenalty
+        f['valid_Y_lifeimprisonment']=valid_Y_lifeimprisonment
+        f['valid_Y_imprisonment']=valid_Y_imprisonment
+        f['valid_weights_accusation']=valid_weights_accusation
+        f['valid_weights_article']=valid_weights_article
+
+        f['test_X_array']=test_X_array
+        f['test_Y_accusation']=test_Y_accusation
+        f['test_Y_article']=test_Y_article
+        f['test_Y_deathpenalty']=test_Y_deathpenalty
+        f['test_Y_lifeimprisonment']=test_Y_lifeimprisonment
+        f['test_Y_imprisonment']=test_Y_imprisonment
+        f['test_weights_accusation']=test_weights_accusation
+        f['test_weights_article']=test_weights_article
         f.close()
+
     return train ,valid,test
 
 splitter=':'
