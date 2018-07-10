@@ -7,7 +7,7 @@
 import tensorflow as tf
 import numpy as np
 from predictor.model import HierarchicalAttention
-from data_util import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data #,imprisonment_mean,imprisonment_std
+from data_util_hdf5 import create_or_load_vocabulary,load_data_multilabel,get_part_validation_data #,imprisonment_mean,imprisonment_std
 import os
 from evaluation_matrix import *
 import gensim

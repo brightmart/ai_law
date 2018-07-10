@@ -267,8 +267,8 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         weight_artilce=1.0
         if data_type == 'train': #set specially weight and copy some examples when it is training data.
 
-            freq_accusation =min([accusation_freq_dict[x] for x in accusation_list]) # accusation_freq_dict[accusation_list[0]]
-            freq_article =min([article_freq_dict[x] for x in article_list]) # article_freq_dict[article_list[0]]
+            freq_accusation =min([accusation_freq_dict[xx] for xx in accusation_list]) # accusation_freq_dict[accusation_list[0]]
+            freq_article =min([article_freq_dict[xxx] for xxx in article_list]) # article_freq_dict[article_list[0]]
 
             if freq_accusation <= num_mini_examples or freq_article <= num_mini_examples:
                 freq=(freq_accusation+freq_article)/2
