@@ -153,7 +153,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
 
     # 4. save to file system if vocabulary of words not exists
-    if 1==2:#if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
+    if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
         #with open(cache_file, 'ab') as data_f:
         print("going to dump train/valid/test data to file sytem!")
             #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
