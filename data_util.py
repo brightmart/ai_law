@@ -71,7 +71,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         Y_imprisonment=f['train_Y_imprisonment']
         weights_accusation=f['train_weights_accusation']
         weights_article=f['train_weights_article']
-        train=X_array,Y_accusation,Y_article,Y_deathpenalty,Y_lifeimprisonment,Y_imprisonment,weights_accusation,weights_article
+        train=np.array(X_array),np.array(Y_accusation),np.array(Y_article),np.array(Y_deathpenalty),np.array(Y_lifeimprisonment),np.array(Y_imprisonment),np.array(weights_accusation),np.array(weights_article)
 
         valid_X_array=f['valid_X_array']
         valid_Y_accusation=f['valid_Y_accusation']
@@ -81,7 +81,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         valid_Y_imprisonment=f['valid_Y_imprisonment']
         valid_weights_accusation=f['valid_weights_accusation']
         valid_weights_article=f['valid_weights_article']
-        valid=valid_X_array,valid_Y_accusation,valid_Y_article,valid_Y_deathpenalty,valid_Y_lifeimprisonment,valid_Y_imprisonment,valid_weights_accusation,valid_weights_article
+        valid=np.array(valid_X_array),np.array(valid_Y_accusation),np.array(valid_Y_article),np.array(valid_Y_deathpenalty),np.array(valid_Y_lifeimprisonment),np.array(valid_Y_imprisonment),np.array(valid_weights_accusation),np.array(valid_weights_article)
 
         test_X_array=f['test_X_array']
         test_Y_accusation=f['test_Y_accusation']
@@ -91,7 +91,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         test_Y_imprisonment=f['test_Y_imprisonment']
         test_weights_accusation=f['test_weights_accusation']
         test_weights_article=f['test_weights_article']
-        test=test_X_array,test_Y_accusation,test_Y_article,test_Y_deathpenalty,test_Y_lifeimprisonment,test_Y_imprisonment,test_weights_accusation,test_weights_article
+        test=np.array(test_X_array),np.array(test_Y_accusation),np.array(test_Y_article),np.array(test_Y_deathpenalty),np.array(test_Y_lifeimprisonment),np.array(test_Y_imprisonment),np.array(test_weights_accusation),np.array(test_weights_article)
 
         f.close()
         return train,valid,test
