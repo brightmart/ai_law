@@ -54,7 +54,7 @@ stride_length=1
 def main(_):
     print("model:",FLAGS.model)
     name_scope=FLAGS.model
-    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style)
+    vocab_word2index, accusation_label2index,articles_label2index= create_or_load_vocabulary(FLAGS.data_path,FLAGS.predict_path,FLAGS.traning_data_file,FLAGS.vocab_size,name_scope=name_scope,test_mode=FLAGS.test_mode) #tokenize_style=FLAGS.tokenize_style
     deathpenalty_label2index={True:1,False:0}
     lifeimprisonment_label2index={True:1,False:0}
     vocab_size = len(vocab_word2index);print("cnn_model.vocab_size:",vocab_size);
@@ -62,7 +62,7 @@ def main(_):
     deathpenalty_num_classes=len(deathpenalty_label2index);lifeimprisonment_num_classes=len(lifeimprisonment_label2index)
     print("accusation_num_classes:",accusation_num_classes);print("article_num_clasess:",article_num_classes)
     train,valid, test= load_data_multilabel(FLAGS.traning_data_file,FLAGS.valid_data_file,FLAGS.test_data_path,vocab_word2index, accusation_label2index,articles_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
-                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style)
+                                      FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode) #,tokenize_style=FLAGS.tokenize_style
     train_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
     valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
     test_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
