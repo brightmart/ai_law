@@ -54,7 +54,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     :return:
     """
     # 1. use cache file if exist
-    cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.pik'
+    cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.h5'
     print("cache_path:",cache_file,"train_valid_test_file_exists:",os.path.exists(cache_file))
     if os.path.exists(cache_file):
         #with open(cache_file, 'rb') as data_f:
