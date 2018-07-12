@@ -9,7 +9,7 @@ compute f1 score(micro,macro) for accusation & relevant article, and score for p
 """
 
 small_value=0.00001
-random_number=2000
+random_number=2000*6
 def compute_confuse_matrix_batch(y_targetlabel_list,y_logits_array,label_dict,name='default'):
     """
     compute confuse matrix for a batch
@@ -212,7 +212,7 @@ def compute_f1(TP,FP,FN,compute_type):
     recall=TP/(TP+FN+small_value)
     f1_score=(2*precison*recall)/(precison+recall+small_value)
 
-    if random.choice([x for x in range(50)]) == 1:print(compute_type,"precison:",str(precison),";recall:",str(recall),";f1_score:",f1_score)
+    if random.choice([x for x in range(500)]) == 1:print(compute_type,"precison:",str(precison),";recall:",str(recall),";f1_score:",f1_score)
 
     return f1_score
 

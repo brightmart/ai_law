@@ -9,7 +9,7 @@ class HierarchicalAttention:
     def __init__(self,  accusation_num_classes,article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,learning_rate,
                         batch_size, decay_steps, decay_rate, sequence_length, num_sentences,vocab_size, embed_size,hidden_size,
                         initializer=tf.random_normal_initializer(stddev=0.1),clip_gradients=1.0,max_pooling_style='max_pooling',
-                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=32,num_repeat=4):#hpcnn_number_filters=32
+                        model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=32,num_repeat=4,additional_feature_length=28):#hpcnn_number_filters=32
         """init all hyperparameter here"""
         # set hyperparamter. o.k.
         self.accusation_num_classes = accusation_num_classes
@@ -18,6 +18,7 @@ class HierarchicalAttention:
         self.lifeimprisonment_num_classes=lifeimprisonment_num_classes
         self.batch_size = batch_size
         self.total_sequence_length = sequence_length
+        self.additional_feature_length=additional_feature_length
         self.num_sentences = num_sentences
         self.vocab_size = vocab_size
         self.embed_size = embed_size
@@ -39,6 +40,8 @@ class HierarchicalAttention:
 
         # add placeholder (X,label)
         self.input_x = tf.placeholder(tf.int32, [batch_size, self.total_sequence_length], name="input_x")
+        self.input_feature = tf.placeholder(tf.int32, [batch_size, self.additional_feature_length], name="input_feature")
+
         self.input_y_accusation=tf.placeholder(tf.float32, [batch_size, self.accusation_num_classes],name="input_y_accusation")
         self.input_y_article = tf.placeholder(tf.float32, [batch_size, self.article_num_classes],name="input_y_article")
         self.input_y_deathpenalty = tf.placeholder(tf.float32, [batch_size, self.deathpenalty_num_classes], name="input_y_deathpenalty")
@@ -80,6 +83,12 @@ class HierarchicalAttention:
         else:
             print("going to use model: pooling")
             self.logits_accusation, self.logits_article, self.logits_deathpenalty, self.logits_lifeimprisonment, self.logits_imprisonment = self.inference_pooling()
+
+        self.logits_accusation_p=tf.nn.sigmoid(self.logits_accusation)
+        self.logits_article_p=tf.nn.sigmoid(self.logits_article)
+        self.logits_deathpenalty_p=tf.nn.sigmoid(self.logits_deathpenalty)
+        self.logits_lifeimprisonment_p=tf.nn.sigmoid(self.logits_lifeimprisonment)
+
         #if not is_training:
         #    return
         #if is_training is not None:
@@ -201,12 +210,21 @@ class HierarchicalAttention:
         combined CNN and RNN: cnn followed by rnn(gru). CNN is used to reduce timestamp; RNN is used to learn long distance dependency.
         :return:
         """
+        # 1. embedding
         input_x = tf.nn.embedding_lookup(self.Embedding, self.input_x)
-        #input_x = tf.layers.dense(input_x, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+
+        # 2.1 convolutional layers
         cnn = self.conv_layers_return_2d_great(input_x, 'conv_layer',reuse_flag=False)  # [batch_size,sequence_length-filter_size + 1,num_filters]
-        #pooling=tf.nn.max_pool(cnn_result, ksize=[1,((self.total_sequence_length-self.filter_size[0])/self.stride_length)+1,1,1], strides=[1,1,1,1], padding='VALID',name="pool")#shape:[batch_size, 1, 1, num_filters].max_pool:performs the max pooling on the input.
-        # 4. classifier
-        h = tf.layers.dense(cnn, self.hidden_size * 4, activation=tf.nn.relu, use_bias=True)
+
+        # 2.2 additiona features(optional): try to use data mining features from sample where its label doing poorly
+        h_feature = tf.layers.dense(self.input_feature, self.hidden_size/4, activation=tf.nn.relu, use_bias=True)
+        h_feature = tf.nn.dropout(h_feature,keep_prob=self.dropout_keep_prob)  # [batch_size, hidden_size/2]
+
+        # 3. concat feature
+        h=tf.concat([cnn,h_feature],axis=-1) #[batch_size, dimension]
+
+        # 4.classifier
+        h = tf.layers.dense(h, self.hidden_size * 2, activation=tf.nn.relu, use_bias=True) #4
         h = tf.nn.dropout(h,keep_prob=self.dropout_keep_prob)  # [batch_size,sequence_length - filter_size + 1,num_filters]
         logits_list = self.project_tasks(h)
         return logits_list
@@ -942,6 +960,7 @@ class HierarchicalAttention:
         with tf.name_scope("embedding_projection"):  # embedding matrix
             self.Embedding = tf.get_variable("Embedding", shape=[self.vocab_size, self.embed_size],initializer=self.initializer)  # [vocab_size,embed_size] tf.random_uniform([self.vocab_size, self.embed_size],-1.0,1.0)
             self.Embedding2 = tf.get_variable("Embedding2", shape=[self.vocab_size, self.embed_size],initializer=self.initializer)  # [vocab_size,embed_size] tf.random_uniform([self.vocab_size, self.embed_size],-1.0,1.0)
+            self.Embedding_feature= tf.get_variable("Embedding_feature", shape=[self.feature_length, self.embed_size/2],initializer=self.initializer)  # [vocab_size,embed_size] tf.random_uniform([self.vocab_size, self.embed_size],-1.0,1.0)
 
 
 batch_size=128

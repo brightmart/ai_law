@@ -16,7 +16,7 @@ from gensim.models import KeyedVectors
 FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("data_path","./data","path of traning data.")
-tf.app.flags.DEFINE_string("traning_data_file","./data_big/cail2018_big.json","path of traning data.") #./data/data_train.json
+tf.app.flags.DEFINE_string("traning_data_file","./data_big/cail2018_big_downsmapled.json","path of traning data.") #./data/cail2018_bi.json
 tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of validation data.")
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
 tf.app.flags.DEFINE_string("predict_path","./predictor","path of traning data.")
@@ -25,21 +25,21 @@ tf.app.flags.DEFINE_string("tokenize_style","word","checkpoint location for the 
 
 tf.app.flags.DEFINE_integer("vocab_size",100000,"maximum vocab size.") #80000
 tf.app.flags.DEFINE_float("learning_rate",0.0003,"learning rate") #0.001
-tf.app.flags.DEFINE_integer("batch_size", 256, "Batch size for training/evaluating.") #批处理的大小 32-->128
+tf.app.flags.DEFINE_integer("batch_size", 128, "Batch size for training/evaluating.") #批处理的大小 32-->128
 tf.app.flags.DEFINE_integer("decay_steps", 1000, "how many steps before decay learning rate.") #6000批处理的大小 32-->128
 tf.app.flags.DEFINE_float("decay_rate", 1.0, "Rate of decay for learning rate.") #0.65一次衰减多少
 tf.app.flags.DEFINE_float("keep_dropout_rate", 0.5, "percentage to keep when using dropout.") #0.65一次衰减多少
-tf.app.flags.DEFINE_integer("sentence_len",400,"max sentence length")#b
+tf.app.flags.DEFINE_integer("sentence_len",500,"max sentence length")#400
 tf.app.flags.DEFINE_integer("num_sentences",16,"number of sentences")
-tf.app.flags.DEFINE_integer("embed_size",64,"embedding size") #300-->64
-tf.app.flags.DEFINE_integer("hidden_size",128,"hidden size") #128
-tf.app.flags.DEFINE_integer("num_filters",128,"number of filter for a filter map used in CNN.") #128
+tf.app.flags.DEFINE_integer("embed_size",300,"embedding size") #300-->64
+tf.app.flags.DEFINE_integer("hidden_size",256,"hidden size") #128
+tf.app.flags.DEFINE_integer("num_filters",256,"number of filter for a filter map used in CNN.") #128
 
 tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,false:testing/inference")
-tf.app.flags.DEFINE_integer("num_epochs",10,"number of epochs to run.")
+tf.app.flags.DEFINE_integer("num_epochs",18,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")#
-tf.app.flags.DEFINE_string("word2vec_model_path","./data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
+tf.app.flags.DEFINE_string("word2vec_model_path","./data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
 #tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
 #tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
@@ -63,14 +63,13 @@ def main(_):
     print("accusation_num_classes:",accusation_num_classes);print("article_num_clasess:",article_num_classes)
     train,valid, test= load_data_multilabel(FLAGS.traning_data_file,FLAGS.valid_data_file,FLAGS.test_data_path,vocab_word2index, accusation_label2index,articles_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
                                       FLAGS.sentence_len,name_scope=name_scope,test_mode=FLAGS.test_mode,tokenize_style=FLAGS.tokenize_style) #,tokenize_style=FLAGS.tokenize_style
-    train_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
-    valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
-    test_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
+    train_X, train_feature_X, train_Y_accusation, train_Y_article, train_Y_deathpenalty, train_Y_lifeimprisonment, train_Y_imprisonment,train_weights_accusation,train_weights_article = train
+    valid_X, valid_feature_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
+    test_X, test_feature_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
     #print some message for debug purpose
     print("length of training data:",len(train_X),";valid data:",len(valid_X),";test data:",len(test_X))
 
-    #if len(train_X[0])>100000:train_X=train_X[0] #todo hack when used by python2.7, and reload from file systmem, that original shape changed.
-    print("trainX_[0]:", train_X[0]);
+    print("trainX_[0]:", train_X[0]); print("train_feature_X[0]:",train_feature_X[0])
 
     train_Y_accusation_short1 = get_target_label_short(train_Y_accusation[0]);train_Y_accusation_short2 = get_target_label_short(train_Y_accusation[1]);train_Y_accusation_short3 = get_target_label_short(train_Y_accusation[2]);train_Y_accusation_short4 = get_target_label_short(train_Y_accusation[20]);train_Y_accusation_short5 = get_target_label_short(train_Y_accusation[200])
     train_Y_article_short = get_target_label_short(train_Y_article[0])
@@ -116,7 +115,7 @@ def main(_):
                 iteration=iteration+1
                 if epoch==0 and counter==0:
                     print("trainX[start:end]:",train_X[start:end],"train_X.shape:",train_X.shape)
-                feed_dict = {model.input_x: train_X[start:end],model.input_y_accusation:train_Y_accusation[start:end],model.input_y_article:train_Y_article[start:end],
+                feed_dict = {model.input_x: train_X[start:end],model.input_feature: train_feature_X[start:end],model.input_y_accusation:train_Y_accusation[start:end],model.input_y_article:train_Y_article[start:end],
                              model.input_y_deathpenalty:train_Y_deathpenalty[start:end],model.input_y_lifeimprisonment:train_Y_lifeimprisonment[start:end],
                              model.input_y_imprisonment:train_Y_imprisonment[start:end],model.input_weight_accusation:train_weights_accusation[start:end],
                              model.input_weight_article:train_weights_article[start:end],model.dropout_keep_prob: FLAGS.keep_dropout_rate,
@@ -175,7 +174,6 @@ def main(_):
             #if (epoch == 2 or epoch == 4 or epoch == 7 or epoch==10 or epoch == 13  or epoch==19):
             #if (epoch == 1 or epoch == 3 or epoch == 6 or epoch == 9 or epoch == 12 or epoch == 18):
             if (epoch == 0 or epoch == 2 or epoch == 4 or epoch == 6 or epoch == 9 or epoch == 13):
-
                 for i in range(2):
                     print(i, "Going to decay learning rate by half.")
                     sess.run(model.learning_rate_decay_half_op)
@@ -197,7 +195,7 @@ def main(_):
     pass
 
 def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classes,accusation_label2index):
-    valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,_,_=get_part_validation_data(valid)
+    valid_X, valid_X_feature,valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,_,_=get_part_validation_data(valid)
     number_examples=len(valid_X)
     print("number_examples:",number_examples)
     eval_loss,eval_counter=0.0,0
@@ -210,14 +208,14 @@ def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classe
     eval_macro_f1_accusation, eval_micro_f1_accusation,eval_r2_score_imprisonment,eval_macro_f1_article,eval_micro_f1_article,eval_r2_score_imprisonment = 0.0,0.0,0.0,0.0,0.0,0.0
     eval_penalty_score=0.0
     for start,end in zip(range(0,number_examples,batch_size),range(batch_size,number_examples,batch_size)):
-        feed_dict = {model.input_x: valid_X[start:end],
+        feed_dict = {model.input_x: valid_X[start:end], model.input_feature: valid_X_feature[start:end],
                      model.input_y_accusation:valid_Y_accusation[start:end],model.input_y_article:valid_Y_article[start:end],
                      model.input_y_deathpenalty:valid_Y_deathpenalty[start:end],model.input_y_lifeimprisonment:valid_Y_lifeimprisonment[start:end],
                      model.input_y_imprisonment:valid_Y_imprisonment[start:end],model.input_weight_accusation:
                          [1.0 for i in range(batch_size)],model.input_weight_article:[1.0 for i in range(batch_size)],
                      model.dropout_keep_prob: 1.0,model.is_training_flag:False}#,model.iter: iteration,model.tst: True}
         curr_eval_loss, logits_accusation,logits_article,logits_deathpenalty,logits_lifeimprisonment,logits_imprisonment= sess.run(
-                        [model.loss_val,model.logits_accusation,model.logits_article,model.logits_deathpenalty,model.logits_lifeimprisonment,model.logits_imprisonment],feed_dict)#logits：[batch_size,label_size]
+                        [model.loss_val,model.logits_accusation_p,model.logits_article_p,model.logits_deathpenalty_p,model.logits_lifeimprisonment_p,model.logits_imprisonment],feed_dict)#logits：[batch_size,label_size]
         #compute confuse matrix for accusation,relevant article,death penalty,life imprisonment
         label_dict_accusation=compute_confuse_matrix_batch(valid_Y_accusation[start:end],logits_accusation,label_dict_accusation,name='accusation')
         label_dict_article = compute_confuse_matrix_batch(valid_Y_article[start:end],logits_article,label_dict_article,name='article')

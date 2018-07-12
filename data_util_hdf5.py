@@ -6,6 +6,7 @@ import codecs
 import random
 import numpy as np
 from tflearn.data_utils import pad_sequences
+#from  data_mining_features import get_data_mining_features
 import multiprocessing
 
 from collections import Counter
@@ -24,7 +25,7 @@ _UNK="UNK"
 
 imprisonment_mean=26.2
 imprisonment_std=33.5
-from predictor.data_util_test import  pad_truncate_list
+from predictor.data_util_test import  pad_truncate_list,get_data_mining_features
 
 def build_chunk(lines, chunk_num=10):
     """
@@ -57,49 +58,24 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     cache_data_dir = 'cache' + "_" + name_scope;cache_file =cache_data_dir+"/"+'train_valid_test.h5'
     print("cache_path:",cache_file,"train_valid_test_file_exists:",os.path.exists(cache_file))
     if os.path.exists(cache_file):
-        #with open(cache_file, 'rb') as data_f:
         print("going to load cache file from file system and return")
-        f = h5py.File(cache_file, 'r')
-        #train=f['train']
-        #valid=f['valid']
-        #test=f['test']
-        X_array=f['train_X_array']
-        Y_accusation=f['train_Y_accusation']
-        Y_article=f['train_Y_article']
-        Y_deathpenalty=f['train_Y_deathpenalty']
-        Y_lifeimprisonment=f['train_Y_lifeimprisonment']
-        Y_imprisonment=f['train_Y_imprisonment']
-        weights_accusation=f['train_weights_accusation']
-        weights_article=f['train_weights_article']
-        train=np.array(X_array),np.array(Y_accusation),np.array(Y_article),np.array(Y_deathpenalty),np.array(Y_lifeimprisonment),np.array(Y_imprisonment),np.array(weights_accusation),np.array(weights_article)
-
-        valid_X_array=f['valid_X_array']
-        valid_Y_accusation=f['valid_Y_accusation']
-        valid_Y_article=f['valid_Y_article']
-        valid_Y_deathpenalty=f['valid_Y_deathpenalty']
-        valid_Y_lifeimprisonment=f['valid_Y_lifeimprisonment']
-        valid_Y_imprisonment=f['valid_Y_imprisonment']
-        valid_weights_accusation=f['valid_weights_accusation']
-        valid_weights_article=f['valid_weights_article']
-        valid=np.array(valid_X_array),np.array(valid_Y_accusation),np.array(valid_Y_article),np.array(valid_Y_deathpenalty),np.array(valid_Y_lifeimprisonment),np.array(valid_Y_imprisonment),np.array(valid_weights_accusation),np.array(valid_weights_article)
-
-        test_X_array=f['test_X_array']
-        test_Y_accusation=f['test_Y_accusation']
-        test_Y_article=f['test_Y_article']
-        test_Y_deathpenalty=f['test_Y_deathpenalty']
-        test_Y_lifeimprisonment=f['test_Y_lifeimprisonment']
-        test_Y_imprisonment=f['test_Y_imprisonment']
-        test_weights_accusation=f['test_weights_accusation']
-        test_weights_article=f['test_weights_article']
-        test=np.array(test_X_array),np.array(test_Y_accusation),np.array(test_Y_article),np.array(test_Y_deathpenalty),np.array(test_Y_lifeimprisonment),np.array(test_Y_imprisonment),np.array(test_weights_accusation),np.array(test_weights_article)
-
-        f.close()
+        train, valid, test=load_cache_from_hdf5(cache_file) # move some code to function 2018-07-12
         return train,valid,test
-        #return pickle.load(data_f)
-    # 2. read source file
+    # 2. read source file (training,valid,test set)
     train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
     train_lines_original = train_file_object.readlines()
     random.shuffle(train_lines_original)
+    train_file_object.close()
+    # valid set
+    valid_file_object = codecs.open(valid_data_path, mode='r', encoding='utf-8')
+    valid_lines = valid_file_object.readlines()
+    random.shuffle(valid_lines)
+    valid_file_object.close()
+    # test set
+    test_file_object = codecs.open(test_data_path, mode='r', encoding='utf-8')
+    test_lines = test_file_object.readlines()
+    random.shuffle(test_lines)
+    test_file_object.close()
 
     if test_mode:
         train_lines_original = train_lines_original[0:1000 * 100]  # 1000
@@ -107,15 +83,13 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
 
     number_examples=len(train_lines_original)
     valid_start=number_examples-(valid_number+test_number)
-
     train_lines=train_lines_original[0:valid_start]
     valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
     test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
-
     print("length of train_lines:",len(train_lines),";length of valid_lines:",len(valid_lines),";length of test_lines:",len(test_lines))
 
-    # 3. transform to train/valid data to standardized format #TODO change to multi-processing version for train
-    ##############below is for multi-processing########################################################################################################
+    # 3. transform to train/valid data to standardized format
+    ############## below is for multi-processing ########################################################################################################
     # 3.1 get chunks as list.
     chunks = build_chunk(train_lines, chunk_num=process_num - 1)
     pool = multiprocessing.Pool(processes=process_num)
@@ -130,67 +104,37 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     print("finish reduce stage...")
 
     # 3.3 merge sub file to final file.
-    X, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article=[],[],[],[],[],[],[],[]
+    X,X_feature, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article=[],[],[],[],[],[],[],[],[]
     for chunk_id in range(process_num):
         file_name =cache_data_dir+'/' + "training_data_temp_" + str(chunk_id)+".pik"
         with open(file_name, 'rb') as data_f:#rb
-            X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_, weights_accusation_, weights_article_=pickle.load(data_f)
-            X.extend(X_);Y_accusation.extend(Y_accusation_);Y_article.extend(Y_article_);Y_deathpenalty.extend(Y_deathpenalty_);Y_lifeimprisonment.extend(Y_lifeimprisonment_)
+            X_, X_feature_,Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_, weights_accusation_, weights_article_=pickle.load(data_f)
+            X.extend(X_);X_feature.extend(X_feature_);Y_accusation.extend(Y_accusation_);Y_article.extend(Y_article_);Y_deathpenalty.extend(Y_deathpenalty_);Y_lifeimprisonment.extend(Y_lifeimprisonment_)
             Y_imprisonment.extend(Y_imprisonment_);weights_accusation.extend(weights_accusation_);weights_article.extend(weights_article_)
             command = 'rm ' + file_name
             os.system(command)
-    ##############above is for multi-processing##########################################################################################################
+    ############## above is for multi-processing ##########################################################################################################
 
     #train=transform_data_to_ind
     # ex(train_lines, vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'train',name_scope)
     valid=transform_data_to_index(valid_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'valid',name_scope,tokenize_style)
-    valid_X_array, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment, valid_weights_accusation, valid_weights_article=valid
+    #valid_X_array, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment, valid_weights_accusation, valid_weights_article=valid
 
     test=transform_data_to_index(test_lines, None,vocab_word2index, accusation_label2index, article_label2index,deathpenalty_label2index, lifeimprisonment_label2index, sentence_len,'test',name_scope,tokenize_style)
-    test_X_array, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment, test_weights_accusation, test_weights_article=test
+    #test_X_array, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment, test_weights_accusation, test_weights_article=test
 
-    X_array=np.array(X)
-    train= X_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
+    X_array=np.array(X); X_feature_array=np.array(X_feature)
+    train= X_array, X_feature_array,Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article
 
     # 4. save to file system if vocabulary of words not exists
-    if not os.path.exists(cache_file): #TODO TODO TODO test 2018.07.05
-        #with open(cache_file, 'ab') as data_f:
-        print("going to dump train/valid/test data to file sytem!")
-            #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
-        f = h5py.File(cache_file, 'w')
-        f['train_X_array']=X_array
-        f['train_Y_accusation']=Y_accusation
-        f['train_Y_article']=Y_article
-        f['train_Y_deathpenalty']=Y_deathpenalty
-        f['train_Y_lifeimprisonment']=Y_lifeimprisonment
-        f['train_Y_imprisonment']=Y_imprisonment
-        f['train_weights_accusation']=weights_accusation
-        f['train_weights_article']=weights_article
-
-        f['valid_X_array']=valid_X_array
-        f['valid_Y_accusation']=valid_Y_accusation
-        f['valid_Y_article']=valid_Y_article
-        f['valid_Y_deathpenalty']=valid_Y_deathpenalty
-        f['valid_Y_lifeimprisonment']=valid_Y_lifeimprisonment
-        f['valid_Y_imprisonment']=valid_Y_imprisonment
-        f['valid_weights_accusation']=valid_weights_accusation
-        f['valid_weights_article']=valid_weights_article
-
-        f['test_X_array']=test_X_array
-        f['test_Y_accusation']=test_Y_accusation
-        f['test_Y_article']=test_Y_article
-        f['test_Y_deathpenalty']=test_Y_deathpenalty
-        f['test_Y_lifeimprisonment']=test_Y_lifeimprisonment
-        f['test_Y_imprisonment']=test_Y_imprisonment
-        f['test_weights_accusation']=test_weights_accusation
-        f['test_weights_article']=test_weights_article
-        f.close()
+    if not os.path.exists(cache_file): # tested 2018.07.05
+        print("going to dump train/valid/test data to file sytem!") #pickle.dump((train,valid,test),data_f,protocol=pickle.HIGHEST_PROTOCOL) #TEMP REMOVED. ,protocol=2
+        dump_cache_to_hdf5(cache_file, train, valid, test) # move some code to function 2018-07-12
 
     return train ,valid,test
 
 splitter=':'
 num_mini_examples=3500 #1900
-
 
 def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
                             sentence_len,data_type,name_scope,tokenize_style):#reverse_flag=False
@@ -207,6 +151,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
     """
     print(data_type,"transform_data_to_index.####################.start.")
     X = []
+    X_feature=[] # additional feature from data mining
     Y_accusation = []  # discrete
     Y_article = []  # discrete
     Y_deathpenalty = []  # discrete
@@ -230,6 +175,10 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
         x = [vocab_word2index.get(x, UNK_ID) for x in input_list]  # transform input to index
         if i % 100000 == 0:print(i,"#######transform_data_to_index.x:",x)
         x=pad_truncate_list(x, sentence_len) #ADD 2018.05.24
+
+        # 1.2 additional feature
+        x_feature=get_data_mining_features(facts.strip())
+        if i % 50000 == 0:print(i,"x_feature:",x_feature)
 
         # 2. transform accusation.discrete
         accusation_list = json_string['meta']['accusation']
@@ -278,6 +227,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
 
         for k in range(num_copy):
             X.append(x)
+            X_feature.append(x_feature)
             Y_accusation.append(y_accusation)
             Y_article.append(y_article)
             Y_deathpenalty.append(y_deathpenalty)
@@ -289,6 +239,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
     #shuffle
     number_examples=len(X)
     X_=[]
+    X_feature_=[]
     Y_accusation_=[]
     Y_article_=[]
     Y_deathpenalty_=[]
@@ -299,6 +250,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
     permutation = np.random.permutation(number_examples)
     for index in permutation:
         X_.append(X[index])
+        X_feature_.append(X_feature[index])
         Y_accusation_.append(Y_accusation[index])
         Y_article_.append(Y_article[index])
         Y_deathpenalty_.append(Y_deathpenalty[index])
@@ -309,7 +261,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
 
     X_=np.array(X_)
 
-    data = (X_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_,weights_accusation_,weights_article_)
+    data = (X_,X_feature_, Y_accusation_, Y_article_, Y_deathpenalty_, Y_lifeimprisonment_, Y_imprisonment_,weights_accusation_,weights_article_)
     #dump to target file if and only if it is training data.
     print(data_type,"#########################finished.transform_data_to_index")
     if data_type == 'train':
@@ -461,18 +413,19 @@ def token_string_as_list(string,tokenize_style='word'):
     return listt
 
 def get_part_validation_data(valid,num_valid=6000*20):#6000
-    valid_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,weight_accusations,weight_artilces=valid
+    valid_X, valid_X_feature, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,weight_accusations,weight_artilces=valid
     number_examples=len(valid_X)
     permutation = np.random.permutation(number_examples)[0:num_valid]
-    valid_X2, valid_Y_accusation2, valid_Y_article2, valid_Y_deathpenalty2, valid_Y_lifeimprisonment2, valid_Y_imprisonment2,weight_accusations2,weight_artilces=[],[],[],[],[],[],[],[]
+    valid_X2, valid_X2_feature,valid_Y_accusation2, valid_Y_article2, valid_Y_deathpenalty2, valid_Y_lifeimprisonment2, valid_Y_imprisonment2,weight_accusations2,weight_artilces=[],[],[],[],[],[],[],[],[]
     for index in permutation :
         valid_X2.append(valid_X[index])
+        valid_X2_feature.append(valid_X_feature[index])
         valid_Y_accusation2.append(valid_Y_accusation[index])
         valid_Y_article2.append(valid_Y_article[index])
         valid_Y_deathpenalty2.append(valid_Y_deathpenalty[index])
         valid_Y_lifeimprisonment2.append(valid_Y_lifeimprisonment[index])
         valid_Y_imprisonment2.append(valid_Y_imprisonment[index])
-    return valid_X2,valid_Y_accusation2,valid_Y_article2,valid_Y_deathpenalty2,valid_Y_lifeimprisonment2,valid_Y_imprisonment2,weight_accusations2,weight_artilces
+    return valid_X2,valid_X2_feature,valid_Y_accusation2,valid_Y_article2,valid_Y_deathpenalty2,valid_Y_lifeimprisonment2,valid_Y_imprisonment2,weight_accusations2,weight_artilces
 
 
 def load_accusation_articles_freq_dict(accusation_label2index,article_label2index,name_scope):
@@ -536,6 +489,102 @@ def replace_money_value(string):
         string=re.sub(str(value),str(sub_value),string)
     return string
 #replace_money_value(x)
+
+
+def dump_cache_to_hdf5(cache_file, train, valid, test):
+    """
+    dump cache to h5
+    :param cache_file:
+    :param train: a tuple
+    :param valid: a tuple
+    :param test: a tuple
+    :return: return nothing
+    """
+    # 1.get elements
+    X_array,X_feature_array, Y_accusation, Y_article, Y_deathpenalty, Y_lifeimprisonment, Y_imprisonment, weights_accusation, weights_article = train
+    valid_X_array,valid_X_feature_array, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment, valid_weights_accusation, valid_weights_article = valid
+    test_X_array, test_X_feature_array, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment, test_weights_accusation, test_weights_article = test
+
+    # 2.save to h5 file
+    f = h5py.File(cache_file, 'w')
+    f['train_X_array'] = X_array
+    f['train_X_feature_array'] = X_feature_array
+    f['train_Y_accusation'] = Y_accusation
+    f['train_Y_article'] = Y_article
+    f['train_Y_deathpenalty'] = Y_deathpenalty
+    f['train_Y_lifeimprisonment'] = Y_lifeimprisonment
+    f['train_Y_imprisonment'] = Y_imprisonment
+    f['train_weights_accusation'] = weights_accusation
+    f['train_weights_article'] = weights_article
+
+    f['valid_X_array'] = valid_X_array
+    f['valid_X_feature_array'] = valid_X_feature_array
+    f['valid_Y_accusation'] = valid_Y_accusation
+    f['valid_Y_article'] = valid_Y_article
+    f['valid_Y_deathpenalty'] = valid_Y_deathpenalty
+    f['valid_Y_lifeimprisonment'] = valid_Y_lifeimprisonment
+    f['valid_Y_imprisonment'] = valid_Y_imprisonment
+    f['valid_weights_accusation'] = valid_weights_accusation
+    f['valid_weights_article'] = valid_weights_article
+
+    f['test_X_array'] = test_X_array
+    f['test_X_feature_array'] = test_X_feature_array
+    f['test_Y_accusation'] = test_Y_accusation
+    f['test_Y_article'] = test_Y_article
+    f['test_Y_deathpenalty'] = test_Y_deathpenalty
+    f['test_Y_lifeimprisonment'] = test_Y_lifeimprisonment
+    f['test_Y_imprisonment'] = test_Y_imprisonment
+    f['test_weights_accusation'] = test_weights_accusation
+    f['test_weights_article'] = test_weights_article
+    f.close()
+
+
+def load_cache_from_hdf5(cache_file):
+    """
+    load cache from h5
+    :param cache_file:
+    :return: train,valid, test
+    """
+    f = h5py.File(cache_file, 'r')
+    X_array = f['train_X_array']
+    X_feature_array = f['train_X_feature_array']
+    Y_accusation = f['train_Y_accusation']
+    Y_article = f['train_Y_article']
+    Y_deathpenalty = f['train_Y_deathpenalty']
+    Y_lifeimprisonment = f['train_Y_lifeimprisonment']
+    Y_imprisonment = f['train_Y_imprisonment']
+    weights_accusation = f['train_weights_accusation']
+    weights_article = f['train_weights_article']
+    train = np.array(X_array),np.array(X_feature_array),np.array(Y_accusation), np.array(Y_article), np.array(Y_deathpenalty), np.array(
+        Y_lifeimprisonment), np.array(Y_imprisonment), np.array(weights_accusation), np.array(weights_article)
+
+    valid_X_array = f['valid_X_array']
+    valid_X_feature_array = f['valid_X_feature_array']
+    valid_Y_accusation = f['valid_Y_accusation']
+    valid_Y_article = f['valid_Y_article']
+    valid_Y_deathpenalty = f['valid_Y_deathpenalty']
+    valid_Y_lifeimprisonment = f['valid_Y_lifeimprisonment']
+    valid_Y_imprisonment = f['valid_Y_imprisonment']
+    valid_weights_accusation = f['valid_weights_accusation']
+    valid_weights_article = f['valid_weights_article']
+    valid = np.array(valid_X_array),np.array(valid_X_feature_array),np.array(valid_Y_accusation), np.array(valid_Y_article), np.array(
+        valid_Y_deathpenalty), np.array(valid_Y_lifeimprisonment), np.array(valid_Y_imprisonment), np.array(
+        valid_weights_accusation), np.array(valid_weights_article)
+
+    test_X_array = f['test_X_array']
+    test_X_feature_array = f['test_X_feature_array']
+    test_Y_accusation = f['test_Y_accusation']
+    test_Y_article = f['test_Y_article']
+    test_Y_deathpenalty = f['test_Y_deathpenalty']
+    test_Y_lifeimprisonment = f['test_Y_lifeimprisonment']
+    test_Y_imprisonment = f['test_Y_imprisonment']
+    test_weights_accusation = f['test_weights_accusation']
+    test_weights_article = f['test_weights_article']
+    test = np.array(test_X_array), np.array(test_X_feature_array),np.array(test_Y_accusation), np.array(test_Y_article), np.array(
+        test_Y_deathpenalty), np.array(test_Y_lifeimprisonment), np.array(test_Y_imprisonment), np.array(
+        test_weights_accusation), np.array(test_weights_article)
+    f.close()
+    return train, valid, test
 
 x="经审理查明，2012年上半年，被告人徐某使用蒋某提供的某某新农合本及身份证等证件，编造王某某甲亢性心脏病、脑溢血在中国人民解放军309医院的整套病历及住院费用证明，" \
   "并让桐柏县大河镇卫生院负责新农合报销的工作人员李某帮其办理新农合报销手续。从而徐某报销出新农合资金52459元。随后徐某分给蒋某某现金5000元。新农合报销资料显示王某某于" \

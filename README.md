@@ -377,13 +377,23 @@ TextCNN-multiple layers(online)|84.51 | 82.20 | 67.60 | 234.31
 Deep Pyramid CNN(offline)|89.0 | 86.4 | 78.6 | 254
 Hierarchical Attention Network(offline)|85.1 | 84.0 | 79.2 | 248.3
 
-Notice: offline score is lower than online score for about 4.0.
+Notice: 
 
+   1.offline(local) score is lower than online(official) score for about 4.0. for example, dpcnn's online performance may be 85 or less.
+   
+   2. we used data_valid.json from data as our valdation data, which is provided in the first stage of competition.
+   
+     but there may exists cases where sample overlap from this validation set and our big 1.7 million training set.
+     
+     so for better evaluation perpose, you may remove those overlapped data from training data, or use other validation set.
+   
  89.03954996862663, ';2.Article Score:', 86.38077500531911, ';3.Penalty Score:', 78.64466689362311, ';Score ALL:', 254.06499186756886)
 
 
-8.Modeling Dependencies of Sub Tasks
+8.Modeling Dependencies of Sub Tasks and Labels 
 ----------------------------------------------------------------
+ Modeling Dependencies of Sub Tasks:
+ 
    given a fact of law case, and a accusation(or charge) of this law case, which relevant law(s) should it apply?
    
    as a matter of fact, relevant law and accusation are highly relevanted. for example, if charge of a law case is fraud, 
@@ -419,7 +429,21 @@ Notice: offline score is lower than online score for about 4.0.
    
    relevant law. the decision we made about accusation, relevant punishment will also influence punishment.
    
-   
+  Modeling Dependencies of Labels of accusation:
+  
+     when doing error analysis, we found that there are some kinds of dependency between labels of accusation given a fact.
+     
+     for example, when some one was selling fake branded product, he or she will be charged of 'selling good of counterfeit registered trademarks',
+     
+     meanwhile he or she will also be charged as 'economic criminal'. 
+     
+     previously we assumed that labels are independent from each other, as we see from computer vision where you can find a cat
+     
+     and there is also a person or not. but now we believe we this is not true, and we better model this task, we should use a better
+     
+     loss function.
+
+     
 9.Error Analysis
 -------------------------------------------------------------------------  
    during each validation, f1 score for each label in accusation will be printed in debug_accusation_accuracy.txt file,
@@ -623,7 +647,8 @@ China law research cup judicial artificial intelligence challenge:
   5) Baseline Needs More Love: On Simple Word-Embedding-Based Modles and Associated Pooling Mechanisms
 
   6) <a href='http://www.aclweb.org/anthology/P/P17/P17-1052.pdf'>Deep Pyramid Convolutional Neural Networks for Text Categorization</a>
-
+  
+  7) <a href=''>todo:Few-Shot Charge Prediction with Discriminative Legal Attributes</a>
 if you are smart or can contribute new ideas, join with us.
 
 to be continued. for any problem, contact brightmart@hotmail.com

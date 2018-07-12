@@ -1,120 +1,66 @@
 # -*- coding: utf-8 -*-
-#import sys
-#reload(sys)
-#sys.setdefaultencoding('utf-8')
-import jieba
-import re
-PAD_ID = 0
-UNK_ID=1
-_PAD="_PAD"
-_UNK="UNK"
-
-imprisonment_mean=26.2
-imprisonment_std=33.5
-
-def token_string_as_list(string,tokenize_style='word'):
-    #string=string.decode("utf-8")
-    string=replace_money_value(string)  #TODO add normalize number ADD 2018.06.11
-
-    length=len(string)
-    if tokenize_style=='char':
-        listt=[string[i] for i in range(length)]
-    elif tokenize_style=='word':
-        listt=jieba.lcut(string)
-    listt=[x for x in listt if x.strip()]
-    return listt
-
-def replace_money_value(string):
-    moeny_list = [1,2,5,7,10, 20, 30,50, 100, 200, 500, 800,1000, 2000, 5000,7000, 10000, 20000, 50000, 80000,100000,200000, 500000, 1000000,3000000,5000000,1000000000]
-    double_patten = r'\d+\.\d+'
-    int_patten = r'[\u4e00-\u9fa5,，.。；;]\d+[元块万千百十余，,。.;；]'
-    doubles=re.findall(double_patten,string)
-    ints=re.findall(int_patten,string)
-    ints=[a[1:-1] for a in ints]
-    #print(doubles+ints)
-    sub_value=0
-    for value in (doubles+ints):
-        for money in moeny_list:
-            if money >= float(value):
-                sub_value=money
-                break
-        string=re.sub(str(value),str(sub_value),string)
-    return string
-
-def pad_truncate_list(x_list, maxlen, value=0,truncating='pre',padding='pre'):
-    """
-    :param x_list:e.g. [1,10,3,5,...]
-    :return:result_list:a new list,length is maxlen
-    """
-    result_list=[0 for i in range(maxlen)] #[0,0,..,0]
-    length_input=len(x_list)
-    if length_input>maxlen: #need to trancat===>no need to pad
-        start_point = (length_input - maxlen)
-        x_list=x_list[start_point:]
-        for i, element in enumerate(x_list):
-            result_list[i] = element
-    else:#sequence is to short===>need to pad something===>no need to trancat. [1,2,3], max_len=1000.
-        x_list.reverse() #[3,2,1]
-        for i in range(length_input):
-            result_list[i] = x_list[i]
-        result_list.reverse()
-    return result_list
-
-#x_list=[1,2,3] #[0, 0, 0, 0, 0, 0, 0, 1, 2, 3]
-#x_list=[1,2,3,4,5,6,7,8,9,10,11,12,13]#===>[4,5,6,7,8,9,10,11,12,13]
-#result_list=pad_truncate_list(x_list, 10, value=0,truncating='pre',padding='pre')
-#print(result_list)
-
-
-
-def load_word_vocab(file_path):
-    """
-    load vocab of word given file path
-    :param file_path:
-    :return: a dict, named:vocab_word2index
-    """
-    file_object=open(file_path,mode='r') #TODO add encoding='utf8' for version python3
-    lines=file_object.readlines()
-    vocab_word2index={}
-    vocab_word2index[_PAD] = PAD_ID
-    vocab_word2index[_UNK] = UNK_ID
-    for i,line in enumerate(lines):
-        line=line.decode("utf-8").strip() #TODO add .decode("utf-8") for python 2.7
-        if "::" in line:
-            word=":"
-        else:
-            word,_=line.split(":") #wor,_="元:272339"
-        vocab_word2index[word] = i + 2
-    return vocab_word2index
-
-def load_label_dict_accu(file_path):
-    """
-     load vocab of label given file path
-     :param file_path:
-     :return: a dict, named:label2index_dict
-     """
-    file_object = open(file_path, mode='r') #TODO add encoding='utf8' for version python 3
-    lines = file_object.readlines()
-    label2index_dict = {}
-    for i, label in enumerate(lines):
-        label = label.decode("utf-8").strip() #TODO .decode("utf-8") for python 2.7
-        label2index_dict[label] = i
-    return label2index_dict
-
-def load_label_dict_article(file_path):
-    """
-     load vocab of label given file path
-     :param file_path:
-     :return: a dict, named:label2index_dict
-     """
-    file_object = open(file_path, mode='r') #TODO add  encoding='utf8' for version python3
-    lines = file_object.readlines()
-    label2index_dict = {}
-    for i, label in enumerate(lines):
-        label = int(label.strip())
-        label2index_dict[label] = i
-    return label2index_dict
-
+"""
+非法收购、运输、加工、出售国家重点保护植物、国家重点保护植物制品:0.0
+经济犯:0.0
+爆炸:0.0
+洗钱:0.0
+打击报复证人:0.0
+过失损坏广播电视设施、公用电信设施:0.0
+协助组织卖淫:0.0
+包庇毒品犯罪分子:0.0
+生产、销售伪劣农药、兽药、化肥、种子:0.0
+非法制造、买卖、运输、储存危险物质:0.0
+过失投放危险物质:0.0
+对单位行贿:0.0
+非法制造、出售非法制造的发票:0.0
+徇私枉法:0.0
+诽谤:0.0pwd 
+高利转贷:0.0
+虐待被监管人:0.0
+倒卖车票、船票:0.0
+伪造、变造居民身份证:0.0
+巨额财产来源不明:0.0
+金融凭证诈骗:0.0
+聚众冲击国家机关:0.0
+非法收购、运输盗伐、滥伐的林木:0.0
+伪造货币:0.0
+非法收购、运输、出售珍贵、濒危野生动物、珍贵、濒危野生动物制品:0.0
+徇私舞弊不移交刑事案件:0.0
+危险物品肇事:0.0
+窝藏、转移、收购、销售赃物:0.0
+强迫卖淫:0.0
+利用影响力受贿:0.0
+以危险方法危害公共安全:0.0
+劫持船只、汽车:0.0
+破坏交通工具:0.0
+妨害作证:0.0
+帮助毁灭、伪造证据:0.0
+徇私舞弊不征、少征税款:0.0
+聚众哄抢:0.0
+走私:0.0
+贷款诈骗:0.0
+过失以危险方法危害公共安全:0.0
+窃取、收买、非法提供信用卡信息:0.0
+挪用特定款物:0.0
+破坏生产经营:0.0
+对非国家工作人员行贿:0.0
+滥用职权:0.0201003015085
+非法猎捕、杀害珍贵、濒危野生动物:0.0465111519743
+投放危险物质:0.0645154630597
+重大劳动安全事故:0.0851055319191
+强制猥亵、侮辱妇女:0.093022325586
+非法进行节育手术:0.133331911113
+强迫交易:0.162160584378
+伪证:0.181816198351
+破坏计算机信息系统:0.249997500012
+侮辱:0.28570938781
+伪造、变造金融票证:0.315786482012
+行贿:0.348036260477
+伪造、变造、买卖国家机关公文、证件、印章:0.349690226605
+招摇撞骗:0.363632929475
+赌博:0.382605422736
+非法获取国家秘密:0.399993600062
+"""
 
 big_feature_list=[]
 feature_list_0 = [u'从轻', u'减轻', u'从重', u'坦白', u'自首', u'谅解', u'认罪', u'数罪', u'并罚', u'主动', u'投案', u'如实', u'供述', u'和解',u'轻伤', u'重伤', u'死亡', u'轻微伤', u'减轻', u'处罚', u'巨大']
@@ -201,6 +147,7 @@ big_feature_list.append(feature_list_26)
 feature_list_27 = [u'挪用', u'移民', u'拨', u'拨付', u'扶持', u'其余', u'专项', u'扶贫', u'结余', u'领', u'款']
 big_feature_list.append(feature_list_27)
 
+
 def get_data_mining_features(input_string,dimension=28):
     """
     get data mininig features from input stirng(a law cases) using rules.
@@ -228,7 +175,11 @@ def one_hot(strings,listt):
             one_hot_feature[i]=1
     return one_hot_feature
 
-
-#input_string=u'门源县人民检察院指控，2014年7月，被告人杨某某从县农牧水利和扶贫开发局领出某乡某村的7.8万元扶贫款，缴纳2964元税金后，将剩余的66900元专项款擅自以平均每户300元发给本村223户村民手中，并与马某甲、包某甲、妥某某等人将下剩的8136元用于报销上访、调查农机具价格产生的费用。针对上述指控的事实，公诉机关向法庭宣读、出示了书证，证人证言，被告人供述等证据材料，指控被告人杨某某的行为触犯了《中华人民共和国刑法》××之规定，构成××'
-#result=get_data_mining_features(input_string)
+#strings='非常运输红豆杉的人把植物给破坏了，这很不好啊'
+#listt=['林业','红豆杉','株','棵','树','二级','保护','植物']
+#result=one_hot(strings,listt)
 #print("result:",result)
+
+input_string=u'门源县人民检察院指控，2014年7月，被告人杨某某从县农牧水利和扶贫开发局领出某乡某村的7.8万元扶贫款，缴纳2964元税金后，将剩余的66900元专项款擅自以平均每户300元发给本村223户村民手中，并与马某甲、包某甲、妥某某等人将下剩的8136元用于报销上访、调查农机具价格产生的费用。针对上述指控的事实，公诉机关向法庭宣读、出示了书证，证人证言，被告人供述等证据材料，指控被告人杨某某的行为触犯了《中华人民共和国刑法》××之规定，构成××'
+result=get_data_mining_features(input_string)
+print("result:",result)
