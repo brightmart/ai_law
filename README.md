@@ -47,9 +47,9 @@ find more about task, data or even start smart AI competition by check here:
 
 
 
-2.Data Visualization & Pre-processing
+2.Data Processing: Data Distribution,Pre-processing, Generate Training & Validation set, Data Mining Features
 -------------------------------------------------------------------------
-
+##2.1 Data Distribution
  1) total examples, crime,relevant articles:
 
       data_train: 155k
@@ -63,7 +63,7 @@ find more about task, data or even start smart AI competition by check here:
       number of total [relevant_article]:183
 
 
-  2) length of inputs(facts of the law case, after word tokenize)
+ 2) length of inputs(facts of the law case, after word tokenize)
 
      average length: 279
 
@@ -80,7 +80,7 @@ find more about task, data or even start smart AI competition by check here:
      that's take length as 500. pad for length less it, and truncate words exceed this number(truncate from start words, not end).
 
 
-  3) label distribution(accusation, relevant article):
+ 3) label distribution(accusation, relevant article):
 
      how many accusations for a case?
 
@@ -95,8 +95,7 @@ find more about task, data or even start smart AI competition by check here:
          length of relevant articles:[(1, 0.71), (2, 0.0), (3, 0.18), (4, 0.07), (5, 0.03), (6, 0.01), (7, 0.004)].
 
 
-
-  4) Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here.)
+ 4) Top20 accusation and its frequency( as you can see that data imbalance problem is not a big problem here; however in big data set this is a serious problem)
 
         Theft: 10051
 
@@ -138,7 +137,8 @@ find more about task, data or even start smart AI competition by check here:
 
         Falsification, alteration, sale and purchase of official documents, documents and seals of state organs: 2153
 
-  5) preprocess value for imprisonment.
+##2.2 Pre-processing
+ 5) preprocess value for imprisonment.
 
      range of imprisonment from 0 to 300(=12*25), it is raw value too big, not may lead to less efficient for model to learn.
 
@@ -151,12 +151,29 @@ find more about task, data or even start smart AI competition by check here:
      we can easily to get its mean:, 26.2, and std:33.5 from training data. during test we will re-scale value back:
 
          imprisonment_test=(imprisonment_test+imprisonment_mean)*imprisonment_std
+     
+     notice: this preprocess is remove. we usually do normalize on features, not target.
 
-  6) normalize value of money:
+ 6) normalize value of money:
 
      there are lots of int and float in this data related to money. such as 12343 or 3446.56, to make it easy for the model to learn it, we normalize
 
      int and float. for example to 10000 or 3000. check method replace_money_value in data_util.py
+
+##2.3 Data Mining Features for handling Few-Shot Labels
+  
+  9) there are some labels only associate with very few samples, like 40,30 or 20. it is very difficult for machine learning models
+  
+     to learn it. 
+     
+     we believe for each law fact, there are some sailent words that can help us to decide what accusation or related law it is.
+     
+     based on this insight, we list these sailent words for few-shot labels, count how many times matched between this words and inputs, 
+     
+     normalize them, and get a vector as our additional feature.
+     
+     you can find this features under data_mining/data_mining_features.py
+     
 
 3.Evaluation: F1 score(Micro,Macro)
 -------------------------------------------------------------------------
@@ -263,7 +280,7 @@ find more about task, data or even start smart AI competition by check here:
 
 4.Imbalance Classification for Skew Data
 -------------------------------------------------------------------------
-
+##4.1 Over-sampling
   since some labels associate with many data, others may only contain few data. we will try to use sampling to handle this problem.
 
   over sampling is used:
@@ -294,6 +311,22 @@ find more about task, data or even start smart AI competition by check here:
   check transform_data_to_index() under data_util.py
 
 
+##4.2 Generating Training and Validation set
+  training data is used all data from training set with sampling.
+  
+     based on frequency of each labels, we also do over-sampling for those labels that are too frequent. 
+     
+     check down sampling: data_mining/data_construct_training_set.py, 
+          
+     frequency of accusation: cache_text_cnn/accusation_freq.txt
+     
+     frequency of law: cache_text_cnn/article_freq.txt
+     
+  validation data is based on validation set released on the early stage, but we remove those data that is 
+   
+     overlap with training data.
+     
+     for distribution of validation data, you can find it in cache_text_cnn/accusation_freq_valid.txt
 
 5.Transfer Learning & Pretrained Word Embedding
 -------------------------------------------------------------------------
@@ -351,6 +384,7 @@ find more about task, data or even start smart AI competition by check here:
 
 7.Performance
 -------------------------------------------------------------------------
+##overall 
    performance on validation dataset(seperate from training data) train for first 1000 steps(around one epoch):
 
    ('1.Accasation Score:', 70.8571253641409, ';2.Article Score:', 71.28389708554336, ';3.Penalty Score:', 69.78947368421059, ';Score ALL:', 211.93049613389485)
@@ -373,9 +407,9 @@ Performance on test env(big data, 1.5 million training data),online:
 
 Model |Accasation Score | Relevant Score | Penalty Score | Total Score
 --|--|--|--|--|
-TextCNN-multiple layers(online)|84.51 | 82.20 | 67.60 | 234.31
-Deep Pyramid CNN(offline)|89.0 | 86.4 | 78.6 | 254
-Hierarchical Attention Network(offline)|85.1 | 84.0 | 79.2 | 248.3
+TextCNN-multiple layers(online)|84.8 | 82.9 | 68.20 | 235.9
+Deep Pyramid CNN(local)|89.0 | 86.4 | 78.6 | 254
+Hierarchical Attention Network(local)|85.1 | 84.0 | 79.2 | 248.3
 
 Notice: 
 
@@ -389,6 +423,71 @@ Notice:
    
  89.03954996862663, ';2.Article Score:', 86.38077500531911, ';3.Penalty Score:', 78.64466689362311, ';Score ALL:', 254.06499186756886)
 
+##F1 score for each accusation on validation set:
+``` 
+accusation: f1 score(validation set)
+经济犯:0.0
+打击报复证人:0.0
+非法制造、买卖、运输、储存危险物质:0.0
+高利转贷:0.0
+倒卖车票、船票:0.0
+走私:0.0
+贷款诈骗:0.536580606819
+非法持有毒品:0.578942996339
+非法制造、销售非法制造的注册商标标识:0.599994600029
+过失投放危险物质:0.66665777783
+协助组织卖淫:0.666661527813
+爆炸:0.739125122907
+赌博:0.740735682904
+寻衅滋事:0.742642039731
+侮辱:0.769224852101
+票据诈骗:0.772722179781
+重大劳动安全事故:0.78688005378
+金融凭证诈骗:0.79999200004
+窃取、收买、非法提供信用卡信息:0.79999200004
+侵占:0.799994250031
+生产、销售伪劣产品:0.816321486448
+帮助毁灭、伪造证据:0.833327777806
+组织卖淫:0.833328020863
+滥用职权:0.837365191538
+故意毁坏财物:0.848869606836
+扰乱无线电通讯管理秩序:0.851846543239
+危险物品肇事:0.857135510238
+非法组织卖血:0.857135510238
+非法制造、出售非法制造的发票:0.857136734723
+单位受贿:0.857137346967
+合同诈骗:0.865465842294
+抢夺:0.867919462471
+职务侵占:0.869295859084
+.......
+.......
+.......
+非法生产、销售间谍专用器材:0.999992500031
+盗窃、侮辱尸体:0.999993000029
+破坏计算机信息系统:0.999993000029
+传播性病:0.999993000029
+盗窃、抢夺枪支、弹药、爆炸物:0.999993000029
+遗弃:0.999993000029
+破坏交通设施:0.999993000029
+盗窃、抢夺枪支、弹药、爆炸物、危险物质:0.999993000029
+强迫卖淫:0.999993333361
+非法携带枪支、弹药、管制刀具、危险物品危及公共安全:0.999993333361
+走私武器、弹药:0.999993333361
+非法进行节育手术:0.999993571456
+伪造、变造、买卖武装部队公文、证件、印章:0.999993571456
+窝藏、转移、隐瞒毒品、毒赃:0.999993750027
+拐骗儿童:0.999993750027
+走私珍贵动物、珍贵动物制品:0.999993750027
+引诱、教唆、欺骗他人吸毒:0.999994000026
+编造、故意传播虚假恐怖信息:0.999994000026
+对单位行贿:0.999994090935
+聚众扰乱公共场所秩序、交通秩序:0.999994090935
+帮助犯罪分子逃避处罚:0.999994166692
+非法获取公民个人信息:0.999994230795
+非法买卖制毒物品:0.999994375025
+脱逃:0.999994375025
+盗掘古文化遗址、古墓葬:0.99999444447
+``` 
 
 8.Modeling Dependencies of Sub Tasks and Labels 
 ----------------------------------------------------------------
@@ -450,7 +549,6 @@ Notice:
    
    those f1 scores are lower will be in list first, so you can pay more attention on to improve accuracy of these labels in accusation task.  
   
-
 
 10.Usage
 -------------------------------------------------------------------------
@@ -606,20 +704,9 @@ China law research cup judicial artificial intelligence challenge:
 
 
 
-13.TODO
+13.Data Mining Features
 -------------------------------------------------------------------------
-   0) normalize numbers for money to standard format or to some range
-
-   1) tracking miss match of micro and macro of f1 score: balance micro and macro to maximize final f1 score
-
-   2) error analysis: print and analysis error cases for each task, and get insight for improvement
-
-   3) truncate or pad sequences in the beginning, or reverse(DONE)
-
-   4) preprocess document as serveral sentences before graph model
-
-   5) try pure CNN or attention models to speed up training(CNN DONE)
-
+   data mining feature is complete, will add desc here as soon as possible
 
 14.Conclusion
 -------------------------------------------------------------------------
@@ -649,6 +736,9 @@ China law research cup judicial artificial intelligence challenge:
   6) <a href='http://www.aclweb.org/anthology/P/P17/P17-1052.pdf'>Deep Pyramid Convolutional Neural Networks for Text Categorization</a>
   
   7) <a href=''>todo:Few-Shot Charge Prediction with Discriminative Legal Attributes</a>
+  
+  8）<a href='https://arxiv.org/pdf/1807.02478.pdf'>CAIL2018: A Large-Scale Legal Dataset for Judgment Prediction</a>
+  
 if you are smart or can contribute new ideas, join with us.
 
 to be continued. for any problem, contact brightmart@hotmail.com

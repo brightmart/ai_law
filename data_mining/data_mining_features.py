@@ -1,65 +1,32 @@
 # -*- coding: utf-8 -*-
 """
-非法收购、运输、加工、出售国家重点保护植物、国家重点保护植物制品:0.0
+Top labels that model doing poorly
+Accusation: F1 Score(Validation)
 经济犯:0.0
-爆炸:0.0
-洗钱:0.0
 打击报复证人:0.0
-过失损坏广播电视设施、公用电信设施:0.0
-协助组织卖淫:0.0
-包庇毒品犯罪分子:0.0
-生产、销售伪劣农药、兽药、化肥、种子:0.0
 非法制造、买卖、运输、储存危险物质:0.0
-过失投放危险物质:0.0
-对单位行贿:0.0
-非法制造、出售非法制造的发票:0.0
-徇私枉法:0.0
-诽谤:0.0pwd 
 高利转贷:0.0
-虐待被监管人:0.0
 倒卖车票、船票:0.0
-伪造、变造居民身份证:0.0
-巨额财产来源不明:0.0
-金融凭证诈骗:0.0
-聚众冲击国家机关:0.0
-非法收购、运输盗伐、滥伐的林木:0.0
-伪造货币:0.0
-非法收购、运输、出售珍贵、濒危野生动物、珍贵、濒危野生动物制品:0.0
-徇私舞弊不移交刑事案件:0.0
-危险物品肇事:0.0
-窝藏、转移、收购、销售赃物:0.0
-强迫卖淫:0.0
-利用影响力受贿:0.0
-以危险方法危害公共安全:0.0
-劫持船只、汽车:0.0
-破坏交通工具:0.0
-妨害作证:0.0
-帮助毁灭、伪造证据:0.0
-徇私舞弊不征、少征税款:0.0
-聚众哄抢:0.0
 走私:0.0
-贷款诈骗:0.0
-过失以危险方法危害公共安全:0.0
-窃取、收买、非法提供信用卡信息:0.0
-挪用特定款物:0.0
-破坏生产经营:0.0
-对非国家工作人员行贿:0.0
-滥用职权:0.0201003015085
-非法猎捕、杀害珍贵、濒危野生动物:0.0465111519743
-投放危险物质:0.0645154630597
-重大劳动安全事故:0.0851055319191
-强制猥亵、侮辱妇女:0.093022325586
-非法进行节育手术:0.133331911113
-强迫交易:0.162160584378
-伪证:0.181816198351
-破坏计算机信息系统:0.249997500012
-侮辱:0.28570938781
-伪造、变造金融票证:0.315786482012
-行贿:0.348036260477
-伪造、变造、买卖国家机关公文、证件、印章:0.349690226605
-招摇撞骗:0.363632929475
-赌博:0.382605422736
-非法获取国家秘密:0.399993600062
+贷款诈骗:0.536580606819
+非法持有毒品:0.578942996339
+非法制造、销售非法制造的注册商标标识:0.599994600029
+过失投放危险物质:0.66665777783
+协助组织卖淫:0.666661527813
+爆炸:0.739125122907
+赌博:0.740735682904
+寻衅滋事:0.742642039731
+侮辱:0.769224852101
+票据诈骗:0.772722179781
+重大劳动安全事故:0.78688005378
+金融凭证诈骗:0.79999200004
+窃取、收买、非法提供信用卡信息:0.79999200004
+侵占:0.799994250031
+生产、销售伪劣产品:0.816321486448
+帮助毁灭、伪造证据:0.833327777806
+组织卖淫:0.833328020863
+滥用职权:0.837365191538
+故意毁坏财物:0.848869606836
 """
 
 big_feature_list=[]
@@ -150,14 +117,17 @@ big_feature_list.append(feature_list_27)
 
 def get_data_mining_features(input_string,dimension=28):
     """
-    get data mininig features from input stirng(a law cases) using rules.
+    get data mininig features using rules. we will get a vector,each scalar(numberic) is associate with a label.
+             for example,the last scalar is associate with label('挪用特定款物'). each scalar is normalized to 0-1, the bigger the value, more salient of the feature
     :param input: input_string is a law case.
-    :return: a 50 dimension vector
+    :return: a n dimension vector
     """
+    #1. create empty list
     feature_list_return=[0 for j in range(dimension)]
+    #2. for each sub list, count how many times it is activated.
     for i,sub_list in enumerate(big_feature_list):
         sub_sum=activate_or_not_return_sum(input_string, sub_list)
-        #print(i,sub_sum)
+        #3. normalize to 0--1, so later we can return a vector as our feature
         feature_list_return[i]=float(sub_sum)/float(len(sub_list))
     return feature_list_return
 

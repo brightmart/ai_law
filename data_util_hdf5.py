@@ -46,7 +46,7 @@ def build_chunk(lines, chunk_num=10):
 
 def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_word2index, accusation_label2index,article_label2index,
                          deathpenalty_label2index,lifeimprisonment_label2index,sentence_len,name_scope='cnn',test_mode=False,valid_number=120000,#12000
-                         test_number=10000,process_num=30,tokenize_style='word'):
+                         test_number=10000,process_num=20,tokenize_style='word'):
     """
     convert data as indexes using word2index dicts.
     :param traning_data_path:
@@ -63,8 +63,8 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
         return train,valid,test
     # 2. read source file (training,valid,test set)
     train_file_object = codecs.open(traning_data_path, mode='r', encoding='utf-8')
-    train_lines_original = train_file_object.readlines()
-    random.shuffle(train_lines_original)
+    train_lines = train_file_object.readlines()
+    random.shuffle(train_lines)
     train_file_object.close()
     # valid set
     valid_file_object = codecs.open(valid_data_path, mode='r', encoding='utf-8')
@@ -78,14 +78,16 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     test_file_object.close()
 
     if test_mode:
-        train_lines_original = train_lines_original[0:1000 * 100]  # 1000
-        valid_number=20000
+        train_lines = train_lines[0:10000 * 3]  # 1000
+        #valid_number=20000
 
-    number_examples=len(train_lines_original)
-    valid_start=number_examples-(valid_number+test_number)
-    train_lines=train_lines_original[0:valid_start]
-    valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
-    test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
+    number_examples=len(train_lines)
+    #valid_start=number_examples-(valid_number+test_number)
+    #train_lines=train_lines_original[0:valid_start]
+    #valid_lines=train_lines_original[valid_start:valid_start+valid_number]#valid_lines=valid_file_object.readlines()
+    #test_lines=train_lines_original[valid_start+valid_number:]#test_lines=test_data_obejct.readlines()
+
+    #train_lines.extend(test_lines)
     print("length of train_lines:",len(train_lines),";length of valid_lines:",len(valid_lines),";length of test_lines:",len(test_lines))
 
     # 3. transform to train/valid data to standardized format
@@ -134,7 +136,7 @@ def load_data_multilabel(traning_data_path,valid_data_path,test_data_path,vocab_
     return train ,valid,test
 
 splitter=':'
-num_mini_examples=3500 #1900
+num_mini_examples=2000
 
 def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_label2index,article_label2index,deathpenalty_label2index,lifeimprisonment_label2index,
                             sentence_len,data_type,name_scope,tokenize_style):#reverse_flag=False
@@ -222,6 +224,7 @@ def transform_data_to_index(lines,target_file_path,vocab_word2index,accusation_l
             if freq_accusation <= num_mini_examples or freq_article <= num_mini_examples:
                 freq=(freq_accusation+freq_article)/2
                 num_copy=int(max(3,num_mini_examples/freq))
+                if num_copy>10:num_copy=10
                 if i%1000==0: print("####################freq_accusation:",freq_accusation,"freq_article:",freq_article,";num_copy:",num_copy)
             weight_accusation, weight_artilce=get_weight_freq_article(freq_accusation, freq_article)
 
@@ -346,6 +349,7 @@ def create_or_load_vocabulary(data_path,predict_path,training_data_path,vocab_si
             c_article_labels.update(article_list)
 
         #3.get most frequency words
+        if tokenize_style=='char':vocab_size=6000 # if we are using character instead of word, then use small vocabulary size.
         vocab_list=c_inputs.most_common(vocab_size)
         word_vocab_file=predict_path+"/"+'word_freq.txt'
         if os.path.exists(word_vocab_file):

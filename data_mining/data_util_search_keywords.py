@@ -26,8 +26,8 @@ def search(keyword,traning_data_path):
             result_list.append((fact,accusation_list,article_list))
     return result_list
 
-keyword=u'交通肇事'
-fact_lists=search(keyword,'../data_big/cail2018_big.json')
+keyword=u'爆炸'
+fact_lists=search(keyword,'../data_big/cail2018_big_downsmapled.json')
 for tuplee in fact_lists:
     fact,accusation_list,article_list=tuplee
     print(fact)

@@ -36,6 +36,8 @@ def compute_confuse_matrix(y_targetlabel_list_single,y_logit_array_single,label_
     y_target_labels=get_target_label_short(y_targetlabel_list_single) #e.g. y_targetlabel_list[0]=[2,12,88]
     #y_logit=y_logit_array_single #y_logit_array[0] #[202]
     y_predict_labels=[i for i in range(len(y_logit_array_single)) if y_logit_array_single[i]>=0.50] #TODO 0.5PW e.g.[2,12,13,10]
+    if len(y_predict_labels) < 1: y_predict_labels = [np.argmax(y_logit_array_single)]
+
     #if len(y_predict_labels)<1:    y_predict_labels=[np.argmax(y_logit_array_single)] #TODO ADD 2018.05.29
     if random.choice([x for x in range(random_number)]) ==1:print(name+".y_target_labels:",y_target_labels,";y_predict_labels:",y_predict_labels) #debug purpose
 

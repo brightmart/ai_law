@@ -17,7 +17,7 @@ FLAGS=tf.app.flags.FLAGS
 
 tf.app.flags.DEFINE_string("data_path","./data","path of traning data.")
 tf.app.flags.DEFINE_string("traning_data_file","./data_big/cail2018_big_downsmapled.json","path of traning data.") #./data/cail2018_bi.json
-tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid.json","path of validation data.")
+tf.app.flags.DEFINE_string("valid_data_file","./data/data_valid_checked.json","path of validation data.")
 tf.app.flags.DEFINE_string("test_data_path","./data/data_test.json","path of validation data.")
 tf.app.flags.DEFINE_string("predict_path","./predictor","path of traning data.")
 tf.app.flags.DEFINE_string("ckpt_dir","./predictor/checkpoint/","checkpoint location for the model") #save to here, so make it easy to upload for test
@@ -39,13 +39,11 @@ tf.app.flags.DEFINE_boolean("is_training_flag",True,"is training.true:tranining,
 tf.app.flags.DEFINE_integer("num_epochs",18,"number of epochs to run.")
 tf.app.flags.DEFINE_integer("validate_every", 1, "Validate every validate_every epochs.") #每10轮做一次验证
 tf.app.flags.DEFINE_boolean("use_pretrained_embedding",True,"whether to use embedding or not.")#
-tf.app.flags.DEFINE_string("word2vec_model_path","./data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin
-#tf.app.flags.DEFINE_string("word2vec_model_path","data_big/law_embedding_64_skipgram.bin","word2vec's vocabulary and vectors")
-#tf.app.flags.DEFINE_string("name_scope","dp_cnn","name scope value.")
+tf.app.flags.DEFINE_string("word2vec_model_path","./data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5","word2vec's vocabulary and vectors") # data/sgns.target.word-word.dynwin5.thr10.neg5.dim300.iter5--->data/news_12g_baidubaike_20g_novel_90g_embedding_64.bin--->sgns.merge.char
 tf.app.flags.DEFINE_boolean("multi_label_flag",True,"use multi label or single label.")
 tf.app.flags.DEFINE_boolean("test_mode",False,"whether it is test mode. if it is test mode, only small percentage of data will be used")
 
-tf.app.flags.DEFINE_string("model","dp_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
+tf.app.flags.DEFINE_string("model","text_cnn","name of model:han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling")
 tf.app.flags.DEFINE_string("pooling_strategy","hier","pooling strategy used when model is pooling. {avg,max,concat,hier}")
 #you can change this
 filter_sizes=[2,3,4,5] #,6,7,8]# [6, 7, 8, 9, 10]
@@ -67,7 +65,8 @@ def main(_):
     valid_X, valid_feature_X, valid_Y_accusation, valid_Y_article, valid_Y_deathpenalty, valid_Y_lifeimprisonment, valid_Y_imprisonment,valid_weights_accusation,valid_weights_article = valid
     test_X, test_feature_X, test_Y_accusation, test_Y_article, test_Y_deathpenalty, test_Y_lifeimprisonment, test_Y_imprisonment,test_weights_accusation,test_weights_article = test
     #print some message for debug purpose
-    print("length of training data:",len(train_X),";valid data:",len(valid_X),";test data:",len(test_X))
+    feature_length=len(train_feature_X[0])
+    print("length of training data:",len(train_X),";valid data:",len(valid_X),";test data:",len(test_X),";feature_length:",feature_length)
 
     print("trainX_[0]:", train_X[0]); print("train_feature_X[0]:",train_feature_X[0])
 
@@ -82,7 +81,7 @@ def main(_):
         #Instantiate Model
         model=HierarchicalAttention( accusation_num_classes,article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,FLAGS.learning_rate,FLAGS.batch_size,
                             FLAGS.decay_steps, FLAGS.decay_rate, FLAGS.sentence_len, FLAGS.num_sentences,vocab_size, FLAGS.embed_size,FLAGS.hidden_size,
-                                     num_filters=FLAGS.num_filters,model=FLAGS.model,filter_sizes=filter_sizes,stride_length=stride_length,pooling_strategy=FLAGS.pooling_strategy)
+                                     num_filters=FLAGS.num_filters,model=FLAGS.model,filter_sizes=filter_sizes,stride_length=stride_length,pooling_strategy=FLAGS.pooling_strategy,feature_length=feature_length)
         #Initialize Save
         saver=tf.train.Saver()
         if os.path.exists(FLAGS.ckpt_dir+"checkpoint"):
@@ -215,7 +214,8 @@ def do_eval(sess,model,valid,iteration,accusation_num_classes,article_num_classe
                          [1.0 for i in range(batch_size)],model.input_weight_article:[1.0 for i in range(batch_size)],
                      model.dropout_keep_prob: 1.0,model.is_training_flag:False}#,model.iter: iteration,model.tst: True}
         curr_eval_loss, logits_accusation,logits_article,logits_deathpenalty,logits_lifeimprisonment,logits_imprisonment= sess.run(
-                        [model.loss_val,model.logits_accusation_p,model.logits_article_p,model.logits_deathpenalty_p,model.logits_lifeimprisonment_p,model.logits_imprisonment],feed_dict)#logits：[batch_size,label_size]
+                        [model.loss_val,model.logits_accusation_p,model.logits_article_p,model.logits_deathpenalty_p,model.logits_lifeimprisonment_p,
+                         model.logits_imprisonment],feed_dict)#logits：[batch_size,label_size]
         #compute confuse matrix for accusation,relevant article,death penalty,life imprisonment
         label_dict_accusation=compute_confuse_matrix_batch(valid_Y_accusation[start:end],logits_accusation,label_dict_accusation,name='accusation')
         label_dict_article = compute_confuse_matrix_batch(valid_Y_article[start:end],logits_article,label_dict_article,name='article')

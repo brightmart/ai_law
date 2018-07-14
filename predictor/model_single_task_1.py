@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Below file contain serveral models, such as text_cnn, dp_cnn, han.
+# Below contian serveral models,but only train task1: accusation.
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib as tf_contrib
@@ -8,7 +8,7 @@ from tensorflow.contrib import rnn
 class HierarchicalAttention:
     def __init__(self,  accusation_num_classes,article_num_classes, deathpenalty_num_classes,lifeimprisonment_num_classes,learning_rate,
                         batch_size, decay_steps, decay_rate, sequence_length, num_sentences,vocab_size, embed_size,hidden_size,
-                        initializer=tf.random_normal_initializer(stddev=0.1),clip_gradients=1.0,max_pooling_style='max_pooling',
+                        initializer=tf.contrib.layers.xavier_initializer(),clip_gradients=1.0,max_pooling_style='max_pooling', #tf.random_normal_initializer(stddev=0.1)
                         model='c_gru',num_filters=128,filter_sizes=[8],stride_length=4,pooling_strategy='hier',hpcnn_filter_size=3,hpcnn_number_filters=32,num_repeat=4,feature_length=28):#hpcnn_number_filters=32
         """init all hyperparameter here"""
         # set hyperparamter. o.k.
@@ -224,8 +224,8 @@ class HierarchicalAttention:
         h=tf.concat([cnn,h_feature],axis=-1) #[batch_size, dimension]
 
         # 4.classifier
-        h = tf.layers.dense(h, self.hidden_size * 2, activation=tf.nn.relu, use_bias=True) #4
-        h = tf.nn.dropout(h,keep_prob=self.dropout_keep_prob)  # [batch_size,sequence_length - filter_size + 1,num_filters]
+        #h = tf.layers.dense(h, self.hidden_size * 2, activation=tf.nn.relu, use_bias=True) #4 TODO
+        #h = tf.nn.dropout(h,keep_prob=self.dropout_keep_prob)  # [batch_size,sequence_length - filter_size + 1,num_filters] TODO
         logits_list = self.project_tasks(h)
         return logits_list
 
@@ -417,31 +417,40 @@ class HierarchicalAttention:
         h_accusation = tf.nn.dropout(h_accusation,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
         logits_accusation = tf.layers.dense(h_accusation, self.accusation_num_classes,use_bias=True)  # shape:[None,self.num_classes]
 
+
         #2.relevant article: concated features-->FC-->dropout-->classifier
 
-        h_article_concated=tf.concat([h,h_accusation],axis=-1) #TODO [batch,?,hidden_size*2] ADD 2018.07.02
-        h_article = tf.layers.dense(h_article_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_article = tf.nn.dropout(h_article,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
-        logits_article = tf.layers.dense(h_article, self.article_num_classes,use_bias=True)  # shape:[None,self.num_classes]
+        #h_article_concated=tf.concat([h,h_accusation],axis=-1) #TODO [batch,?,hidden_size*2] ADD 2018.07.02
+        #h_article = tf.layers.dense(h_article_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #h_article = tf.nn.dropout(h_article,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
+        #logits_article = tf.layers.dense(h_article, self.article_num_classes,use_bias=True)  # shape:[None,self.num_classes]
+
+        logits_article=tf.zeros((self.batch_size,self.article_num_classes))
 
         #3.death penalty: concated features-->FC-->dropout-->classifier
-        h_deathpenalty_concated=tf.concat([h,h_accusation,h_article],axis=-1)  #TODO [batch,?,hidden_size*3] ADD 2018.07.02
-        h_deathpenalty = tf.layers.dense(h_deathpenalty_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_deathpenalty = tf.nn.dropout(h_deathpenalty,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
-        logits_deathpenalty = tf.layers.dense(h_deathpenalty,self.deathpenalty_num_classes,use_bias=True)  # shape:[None,self.num_classes] #
+        #h_deathpenalty_concated=tf.concat([h,h_accusation,h_article],axis=-1)  #TODO [batch,?,hidden_size*3] ADD 2018.07.02
+        #h_deathpenalty = tf.layers.dense(h_deathpenalty_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #h_deathpenalty = tf.nn.dropout(h_deathpenalty,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
+        #logits_deathpenalty = tf.layers.dense(h_deathpenalty,self.deathpenalty_num_classes,use_bias=True)  # shape:[None,self.num_classes] #
+
+        logits_deathpenalty=tf.zeros((self.batch_size,self.deathpenalty_num_classes))
 
         #4.life imprisonment: concated features-->FC-->dropout-->classifier
-        h_lifeimprsion_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty],axis=-1)
-        h_lifeimprisonment = tf.layers.dense(h_lifeimprsion_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        h_lifeimprisonment = tf.nn.dropout(h_lifeimprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
-        logits_lifeimprisonment = tf.layers.dense(h_lifeimprisonment, self.lifeimprisonment_num_classes,use_bias=True)  # shape:[None,self.num_classes]
+        #h_lifeimprsion_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty],axis=-1)
+        #h_lifeimprisonment = tf.layers.dense(h_lifeimprsion_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #h_lifeimprisonment = tf.nn.dropout(h_lifeimprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
+        #logits_lifeimprisonment = tf.layers.dense(h_lifeimprisonment, self.lifeimprisonment_num_classes,use_bias=True)  # shape:[None,self.num_classes]
+
+        logits_lifeimprisonment=tf.zeros((self.batch_size,self.deathpenalty_num_classes))
 
         #5.imprisonment: concated features-->FC-->dropout-->classifier
-        h_imprisonment_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty,h_lifeimprisonment],axis=-1)
-        logits_imprisonment = tf.layers.dense(h_imprisonment_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
-        logits_imprisonment = tf.nn.dropout(logits_imprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
-        logits_imprisonment = tf.layers.dense(logits_imprisonment, 1,use_bias=True)  # imprisonment is a continuous value, no need to use activation function
-        logits_imprisonment = tf.reshape(logits_imprisonment, [-1]) #[batch_size]
+        #h_imprisonment_concated=tf.concat([h,h_accusation,h_article,h_deathpenalty,h_lifeimprisonment],axis=-1)
+        #logits_imprisonment = tf.layers.dense(h_imprisonment_concated, self.hidden_size, activation=tf.nn.relu, use_bias=True)
+        #logits_imprisonment = tf.nn.dropout(logits_imprisonment,keep_prob=self.dropout_keep_prob) # TODO ADD 2018.07.02
+        #logits_imprisonment = tf.layers.dense(logits_imprisonment, 1,use_bias=True)  # imprisonment is a continuous value, no need to use activation function
+        #logits_imprisonment = tf.reshape(logits_imprisonment, [-1]) #[batch_size]
+        logits_imprisonment = tf.zeros((self.batch_size)) #[batch_size]
+
         return logits_accusation, logits_article, logits_deathpenalty, logits_lifeimprisonment, logits_imprisonment
 
     def conv_layers_return_3d(self, input_x, name_scope, reuse_flag=False):
@@ -912,34 +921,13 @@ class HierarchicalAttention:
         #input_y_accusation_onehot=tf.one_hot(self.input_y_accusation,self.accusation_num_classes)
         losses_accusation= tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_accusation,logits=self.logits_accusation)  #[batch_size,num_classes]
         self.loss_accusation = tf.reduce_mean((tf.reduce_sum(losses_accusation,axis=1)))  # shape=(?,)-->(). loss for all data in the batch-->single loss
-
-        #loss2:relevant article
-        #input_y_article_onehot=tf.one_hot(self.input_y_article,self.article_num_classes)
-        losses_article= tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_article,logits=self.logits_article)  # [batch_size,num_classes]
-        self.loss_article = tf.reduce_mean((tf.reduce_sum(losses_article, axis=1)))  # shape=(?,)-->(). loss for all data in the batch-->single loss
-
-        #loss3:death penalty
-        print("self.input_y_deathpenalty:",self.input_y_deathpenalty,";self.logits_deathpenalty:",self.logits_deathpenalty)
-        losses_deathpenalty = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_deathpenalty,logits=self.logits_deathpenalty)
-        self.loss_deathpenalty = tf.reduce_mean((tf.reduce_sum(losses_deathpenalty, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
-
-        #loss4:life imprisonment
-        losses_lifeimprisonment = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.input_y_lifeimprisonment,logits=self.logits_lifeimprisonment)
-        self.loss_lifeimprisonment = tf.reduce_mean((tf.reduce_sum(losses_lifeimprisonment, axis=1))) # shape=(?,)-->(). loss for all data in the batch-->single loss
-
-        #loss5: imprisonment: how many year in prison.
-        self.loss_imprisonment =tf.reduce_mean(tf.divide(tf.pow((self.logits_imprisonment-self.input_y_imprisonment),2),1000.0)) #1000.0TODO
-        print("sigmoid_cross_entropy_with_logits.losses:", losses_accusation)  # shape=(?, 1999).
+        self.loss_article=tf.constant(0.0001)
+        self.loss_deathpenalty=tf.constant(0.0001)
+        self.loss_lifeimprisonment=tf.constant(0.0001)
+        self.loss_imprisonment=tf.constant(0.0001)
         self.l2_loss = tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'bias' not in v.name]) * l2_lambda
 
-        self.weights_accusation = 0.25 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 3.0    # 0--1/3
-        self.weights_article = 0.25 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 3.0       # 0--1/3
-        self.weights_deathpenalty = 0.15 #tf.nn.sigmoid(tf.cast(self.global_step / 1000, dtype=tf.float32)) / 9.0   #0--1/9
-        self.weights_lifeimprisonment = 0.15 #tf.nn.sigmoid(tf.cast(self.global_step / 1000.0, dtype=tf.float32)) / 9.0 #0--1/9
-        self.weights_imprisonment=0.2 #1-(self.weights_accusation+self.weights_article+self.weights_deathpenalty+self.weights_lifeimprisonment) #0-1/9
-        loss = self.weights_accusation*self.loss_accusation+self.weights_article*self.loss_article+self.weights_deathpenalty*self.loss_deathpenalty +\
-               self.weights_lifeimprisonment*self.loss_lifeimprisonment+self.weights_imprisonment*self.loss_imprisonment+self.l2_loss
-        loss=self.loss_accusation
+        loss = self.loss_accusation+self.l2_loss
         return loss
 
     def train(self):

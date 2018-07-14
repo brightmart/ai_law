@@ -28,7 +28,7 @@ def xxx(training_data_path,name_scope):
       c_article_labels.update(article_list)
 
    # 3.write accusation and its frequency.
-   accusation_freq_file = codecs.open(cache_vocabulary_label_pik + "/" + 'accusation_freq_valid.txt', mode='a',encoding='utf-8')
+   accusation_freq_file = codecs.open(cache_vocabulary_label_pik + "/" + 'accusation_freq_valid_checked.txt', mode='a',encoding='utf-8')
    accusation_label_list = c_accusation_labels.most_common()
    for i, tuplee in enumerate(accusation_label_list):
       label, freq = tuplee
@@ -36,7 +36,7 @@ def xxx(training_data_path,name_scope):
    accusation_freq_file.close()
 
    # 4. write relevant article(law) and its frequency
-   article_freq_file = codecs.open(cache_vocabulary_label_pik + "/" + 'article_freq_valid.txt', mode='a', encoding='utf-8')
+   article_freq_file = codecs.open(cache_vocabulary_label_pik + "/" + 'article_freq_valid_checked.txt', mode='a', encoding='utf-8')
    article_label_list = c_article_labels.most_common()
    for j, tuplee in enumerate(article_label_list):
       label, freq = tuplee
@@ -44,7 +44,7 @@ def xxx(training_data_path,name_scope):
    article_freq_file.close()
 
 
-training_data_path='../data/data_valid.json' #''../data_big/cail2018_big.json'
+training_data_path='../data/data_valid_checked.json' #''../data_big/cail2018_big.json'
 name_scope='text_cnn'
 xxx(training_data_path,name_scope)
 
