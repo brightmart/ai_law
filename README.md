@@ -41,8 +41,6 @@ this repository contain models that learn from law cases to make a prediction:
 
 find more about task, data or even start smart AI competition by check here:
 
-<a href='https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg'>https://github.com/brightmart/ai_law/blob/master/data/model_law.jpg</a>
-
 <a href='http://cail.cipsc.org.cn/index.html'>http://cail.cipsc.org.cn/index.html</a>
 
  you can download sample data <a href='https://pan.baidu.com/s/1oXL3Qa5HSPagG-NxFaNvHA'>here</a>, password is:d6e9
