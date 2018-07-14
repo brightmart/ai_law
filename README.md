@@ -45,6 +45,8 @@ find more about task, data or even start smart AI competition by check here:
 
 <a href='http://cail.cipsc.org.cn/index.html'>http://cail.cipsc.org.cn/index.html</a>
 
+ you can download sample data <a href='https://pan.baidu.com/s/1oXL3Qa5HSPagG-NxFaNvHA'>here</a>, password is:d6e9
+
 
 
 2.Data Processing: Data Distribution,Pre-processing, Generate Training & Validation set, Data Mining Features
@@ -55,9 +57,9 @@ find more about task, data or even start smart AI competition by check here:
 
       data_train: 155k
 
-      data_valid: 17k
+      data_valid(data_valid.json): 17k
 
-      data_test: 33k
+      data_test(data_test.json): 33k
 
       number of total [accusation]: 202
 
@@ -65,7 +67,7 @@ find more about task, data or even start smart AI competition by check here:
     
     total examples, crime,relevant articles(stage two):
        
-       data set: around 1.7 million, we had to generate training/validation/test set ourself.
+       data set(cail2018_big.json): around 1.7 million, we had to generate training/validation/test set ourself.
        
        number of labels is same as stage one.
 
@@ -543,23 +545,27 @@ accusation: f1 score(validation set)
 -------------------------------------------------------------------------
   train:
 
-     python HAN_train.py
+     python train.py
 
-    it will report macro f1 score and micro f1 score when doing validation, and save checkpoint to predictor/checkpoint
+    it will report macro f1 score and micro f1 score when doing validation, save f1 score for each label on validation 
+     
+     during each epoch, and save checkpoint to predictor/checkpoint/
 
     optional parameters:
 
-    --model: the name of model you will use. {han,text_cnn,dp_cnn,c_gru,c_gru2,gru,pooling} [han]
+    --model: the name of model you will use. {text_cnn,han,dp_cnn,c_gru,c_gru2,gru,pooling} [text_cnn]
 
     --use_pretrained_embedding: whether use pretrained embedding or not. download it as discussed on section #5, otherwise set it to False. {True,False} [True]
 
     --embed_size: embedding size
 
     --hidden_size: hidden size
+    
+    --tokenize_style: how to tokenize your input(sentences/document).if you set this to char, you are training a char model. {word, char} [word]
 
   predict(or test):
 
-     python3 main.py
+     python main.py
 
   zip your model so that you can upload for testing purpose, run:
 
