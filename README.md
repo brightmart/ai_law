@@ -49,8 +49,9 @@ find more about task, data or even start smart AI competition by check here:
 
 2.Data Processing: Data Distribution,Pre-processing, Generate Training & Validation set, Data Mining Features
 -------------------------------------------------------------------------
+
 ##2.1 Data Distribution
- 1) total examples, crime,relevant articles:
+ 1) total examples, crime,relevant articles(stage one):
 
       data_train: 155k
 
@@ -61,6 +62,12 @@ find more about task, data or even start smart AI competition by check here:
       number of total [accusation]: 202
 
       number of total [relevant_article]:183
+    
+    total examples, crime,relevant articles(stage two):
+       
+       data set: around 1.7 million, we had to generate training/validation/test set ourself.
+       
+       number of labels is same as stage one.
 
 
  2) length of inputs(facts of the law case, after word tokenize)
@@ -116,28 +123,10 @@ find more about task, data or even start smart AI competition by check here:
         Organization, coercion, seduction, shelter, and introduction of prostitution: 2647
 
         Manufacture, trafficking, and Disseminating Obscene Articles: 2617
-
-        Take drugs for others: 2597
-
-        Traffic accident: 2562
-
-        Embezzlement: 2391
-
-        Illegal possession, possession of firearms, ammunition: 2349
-
-        Intentional homicide: 2282
-
-        Opening casinos: 2259
-
-        Illegal possession of drugs: 2203
-
-        Occupation encroachment: 2197
-
-        Rape: 2192
-
-        Falsification, alteration, sale and purchase of official documents, documents and seals of state organs: 2153
+        
 
 ##2.2 Pre-processing
+
  5) preprocess value for imprisonment.
 
      range of imprisonment from 0 to 300(=12*25), it is raw value too big, not may lead to less efficient for model to learn.
@@ -162,7 +151,7 @@ find more about task, data or even start smart AI competition by check here:
 
 ##2.3 Data Mining Features for handling Few-Shot Labels
   
-  9) there are some labels only associate with very few samples, like 40,30 or 20. it is very difficult for machine learning models
+  7) there are some labels only associate with very few samples, like 40,30 or 20. it is very difficult for machine learning models
   
      to learn it. 
      
@@ -737,7 +726,7 @@ China law research cup judicial artificial intelligence challenge:
   
   7) <a href=''>todo:Few-Shot Charge Prediction with Discriminative Legal Attributes</a>
   
-  8）<a href='https://arxiv.org/pdf/1807.02478.pdf'>CAIL2018: A Large-Scale Legal Dataset for Judgment Prediction</a>
+  8) <a href='https://arxiv.org/pdf/1807.02478.pdf'>CAIL2018: A Large-Scale Legal Dataset for Judgment Prediction</a>
   
 if you are smart or can contribute new ideas, join with us.
 
