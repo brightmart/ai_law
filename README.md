@@ -321,7 +321,7 @@ find more about task, data or even start smart AI competition by check here:
 -------------------------------------------------------------------------
   download pretrained word embedding from https://github.com/Embedding/Chinese-Word-Vectors and enable flag 'use_embedding' during training.
 
-  or download from https://pan.baidu.com/s/1o7MWrnc, password: wzqv , choose '.bin' file, embedding size is 64.
+  or download from https://pan.baidu.com/s/1SO5DmPFy6xvipzQe4ShMqw, download and unzip it, embedding size is 64.
 
   command to import word embedding, especially for words contain chinese:
 
