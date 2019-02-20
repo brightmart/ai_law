@@ -939,7 +939,7 @@ class HierarchicalAttention:
         self.weights_imprisonment=0.2 #1-(self.weights_accusation+self.weights_article+self.weights_deathpenalty+self.weights_lifeimprisonment) #0-1/9
         loss = self.weights_accusation*self.loss_accusation+self.weights_article*self.loss_article+self.weights_deathpenalty*self.loss_deathpenalty +\
                self.weights_lifeimprisonment*self.loss_lifeimprisonment+self.weights_imprisonment*self.loss_imprisonment+self.l2_loss
-        loss=self.loss_accusation
+        # loss=self.loss_accusation
         return loss
 
     def train(self):
